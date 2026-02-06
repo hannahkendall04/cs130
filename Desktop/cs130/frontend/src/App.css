@@ -1,7 +1,0 @@
-@import "tailwindcss";
-
-@layer base {
-  button {
-    @apply rounded-md bg-blue-500 p-2 text-white hover:cursor-pointer;
-  }
-}
