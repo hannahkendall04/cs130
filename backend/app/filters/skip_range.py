@@ -1,6 +1,5 @@
 from app.filters.timestamp import Timestamp, TimeRange
 
-
 class SkipRange:
     def __init__(self, time_range: TimeRange, category: str):
         self.time_range = time_range
