@@ -1,40 +1,42 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
 import "./App.css";
-import Bleeper from "./Bleeper";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 
 function App() {
-  const [count, setCount] = useState(0);
-
   return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <div className="flex w-96 flex-col gap-4 p-4">
+      <h1 className="w-full text-center">flixtra</h1>
+      <div className="flex flex-col gap-2">
+        <h2>display name</h2>
+        <p>lorem ipsum</p>
       </div>
-      <h1>Vite + React</h1>
-      <button className="rounded-md bg-blue-500 p-2 text-white">
-        Click me
-      </button>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <h2>pg-ify</h2>
+          <Switch />
+        </div>
+        <div className="flex items-center gap-2">
+          <Checkbox />
+          <p>profanity</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Checkbox />
+          <p>sexual content</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Checkbox />
+          <p>substance use</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Checkbox />
+          <p>violence and abuse</p>
+        </div>
       </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-
-      <Bleeper />
-    </>
+      <div className="flex items-center justify-between">
+        <h2>show comments section</h2>
+        <Switch />
+      </div>
+    </div>
   );
 }
 
