@@ -14,7 +14,7 @@
   "content_scripts": [
     {
       "matches": ["*://*.youtube.com/*"],
-      "js": ["contentScript.js"]
+      "js": ["contentScript.js", "skipRange.js"]
     }
   ]
 }

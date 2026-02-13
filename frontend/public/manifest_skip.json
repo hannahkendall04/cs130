@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "YouTube Skip Range POC",
+  "version": "1.0",
+  "description": "Proof of concept extension that skips a specified time range in YouTube videos.",
+  "permissions": ["activeTab"],
+  "host_permissions": [
+    "https://www.youtube.com/*"
+  ],
+  "action": {
+    "default_popup": "basicSkip.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/*"],
+      "js": ["skipRange.js"]
+    }
+  ]
+}
