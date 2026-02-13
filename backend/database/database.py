@@ -10,9 +10,16 @@ DB_NAME = os.getenv("DB_NAME")
 
 client = AsyncIOMotorClient(MONGODB_URL)
 database = client[DB_NAME]
+timestamp_collection = database["timestamp_cache"]
 
 
 class Comment(BaseModel):
     text: str
     showId: int # subject to change - identifier for show
     startTime: str # subject to change - start time identifier
+
+class TimestampCache(BaseModel):
+    showID: int
+    filters: list[str]
+    timestamps: list[dict]
+    created_at: str
