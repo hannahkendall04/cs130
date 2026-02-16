@@ -5,6 +5,7 @@ import { viteStaticCopy } from "vite-plugin-static-copy";
 import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
+  base: "./",
   plugins: [
     react(),
     tailwindcss(),
@@ -13,6 +14,10 @@ export default defineConfig({
         {
           src: "public/manifest.json",
           dest: ".",
+        }, 
+        {
+          src: "public/skipRange.js",
+          dest: "."
         },
       ],
     }),

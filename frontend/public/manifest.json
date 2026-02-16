@@ -1,20 +1,22 @@
 {
   "manifest_version": 3,
-  "name": "flixtra",
-  "version": "1.0.0",
-  "description": "Providing extra features to Netflix",
+  "name": "Netflix Skip Range POC",
+  "version": "1.0",
+  "description": "Proof of concept extension that skips a specified time range in Netflix videos.",
+  "permissions": ["activeTab", "storage"],
+  "host_permissions": [
+    "https://www.netflix.com/*"
+  ],
   "action": {
     "default_popup": "index.html"
   },
-  "background": {
-    "service_worker": "background.js"
-  },
-  "permissions": ["tabs", "scripting"],
-  "host_permissions": ["*://*.youtube.com/*"],
   "content_scripts": [
     {
-      "matches": ["*://*.youtube.com/*"],
-      "js": ["contentScript.js", "skipRange.js"]
+      "matches": ["https://www.netflix.com/*"],
+      "js": ["skipRange.js"]
     }
-  ]
+  ],
+  "background": {
+    "service_worker": "background.js"
+  }
 }
