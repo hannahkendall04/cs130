@@ -42,7 +42,7 @@ async def save_timestamps(
         "showId": show_id,
         "filters": filters,
         "skip_ranges": serialize_skip_ranges(skip_ranges),
-        "created_at": datetime.utcnow(),
+        "created_at": datetime.now(datetime.timezone.utc),
     }
 
     # Upsert prevents duplicate entries

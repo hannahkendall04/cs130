@@ -17,6 +17,8 @@ class Comment(BaseModel):
     text: str
     showId: int # subject to change - identifier for show
     startTime: str # subject to change - start time identifier
+    endTime: str # subject to change - end time identifier
+    user: str # subject to change - posting user
 
 class TimestampCache(BaseModel):
     showID: int
