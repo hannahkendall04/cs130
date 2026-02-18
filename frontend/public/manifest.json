@@ -3,17 +3,22 @@
   "name": "Netflix Skip Range POC",
   "version": "1.0",
   "description": "Proof of concept extension that skips a specified time range in Netflix videos.",
-  "permissions": ["activeTab", "storage"],
+  "permissions": [
+    "activeTab", 
+    "storage",
+    "webRequest",
+    "downloads"
+  ],
   "host_permissions": [
-    "https://www.netflix.com/*",
-    "https://www.youtube.com/*"
+    "https://*.netflix.com/*",
+    "https://*.nflxvideo.net/*"
   ],
   "action": {
     "default_popup": "index.html"
   },
   "content_scripts": [
     {
-      "matches": ["https://www.netflix.com/*", "https://www.youtube.com/*"],
+      "matches": ["https://*.netflix.com/*"],
       "js": ["skipRange.js"],
       "run_at": "document_idle"
     },
@@ -22,6 +27,11 @@
       "js": ["netflixSeek.js"],
       "run_at": "document_idle",
       "world": "MAIN"
+    },
+    {
+      "matches": ["https://www.netflix.com/*"],
+      "js": ["subtitles.js"],
+      "run_at": "document_idle"
     }
   ],
   "background": {
