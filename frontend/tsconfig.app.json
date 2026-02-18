@@ -28,5 +28,5 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src", "public/contentScript.js"]
+  "include": ["src", "public/contentScript.js", "src/background.js"]
 }
