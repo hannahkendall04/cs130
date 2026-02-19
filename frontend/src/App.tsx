@@ -9,7 +9,7 @@ function App() {
 
   // testing - constant time ranges 
   const startNum = 10;
-  const endNum = 30;
+  const endNum = 13;
   // end testing 
 
   // testing - constant time range on save
@@ -56,6 +56,7 @@ function App() {
           <div className="flex px-2 gap-2">
             <button id="skipButton" className="w-[50%] rounded bg-blue-500 text-white mb-2 hover:bg-blue-700" onClick={() => setFilterMethod("skip")}>skip</button>
             <button id="muteButton" className="w-[50%] rounded bg-blue-500 text-white mb-2 hover:bg-blue-700" onClick={() => setFilterMethod("mute")}>mute</button>
+            <button id="muteButton" className="w-[50%] rounded bg-blue-500 text-white mb-2 hover:bg-blue-700" onClick={() => setFilterMethod("bleep")}>bleep</button>
           </div>
         </div>
       </div>

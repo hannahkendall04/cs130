@@ -3,6 +3,8 @@ console.log("Netflix skip range content script loaded");
 let startTime = null;
 let endTime = null;
 let filterMethod = "";
+let bleeping = false;
+let bleepCtx = null;
 
 // load time
 chrome.storage.local.get(["skipRange", "filterMethod"], (data) => {
@@ -23,22 +25,72 @@ chrome.storage.onChanged.addListener((changes) => {
 });
 
 function attachToVideo(video) {
+  video.addEventListener("pause", () => pauseBleep());
+
+  video.addEventListener("play", () => {
+    if (bleeping) resumeBleep();
+  });
+
   video.addEventListener("timeupdate", () => {
     console.log(`Current time: ${video.currentTime}`); // for debugging purposes/easy view in console
     if (startTime !== null && endTime !== null) {
       if (video.currentTime >= startTime && video.currentTime < endTime) {
-        if (filterMethod == "skip") {
+        if (filterMethod === "skip") {
           window.postMessage({ type: "NETFLIX_SEEK", time: endTime * 1000 }, "*");
-        } else if (filterMethod == "mute" && !video.muted) {
+        } else if ((filterMethod === "mute" || filterMethod === "bleep") && !video.muted) {
           video.muted = true;
         } else {
           console.log("No filter method selected");
         }
-      } else if (filterMethod == "mute" && video.muted) {
+
+        if (filterMethod === "bleep" && !bleeping) {
+          startBleep();
+          bleeping = true;
+        }
+
+      } else if ((filterMethod === "mute" || filterMethod === "bleep") && video.muted) {
         video.muted = false;
+        if (bleeping) {
+          stopBleep();
+          bleeping = false;
+        }
       }
     }
   })
+}
+
+function startBleep() {
+  if (bleepCtx) return; // already bleeping
+
+  bleepCtx = new AudioContext();
+  const oscillator = bleepCtx.createOscillator();
+  const gainNode = bleepCtx.createGain();
+
+  oscillator.connect(gainNode);
+  gainNode.connect(bleepCtx.destination);
+  oscillator.type = 'sine';
+  oscillator.frequency.setValueAtTime(1000, bleepCtx.currentTime);
+  gainNode.gain.setValueAtTime(1, bleepCtx.currentTime);
+
+  oscillator.start();
+}
+
+function stopBleep() {
+  if (!bleepCtx) return;
+  bleepCtx.close();
+  bleepCtx = null;
+}
+
+function pauseBleep() {
+  if (bleepCtx && bleepCtx.state === 'running') {
+    bleepCtx.suspend();
+  }
+}
+
+function resumeBleep() {
+  if (bleepCtx && bleepCtx.state === 'suspended') {
+    bleepCtx.resume();
+  }
 }
 
 
