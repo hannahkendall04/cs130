@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Netflix Skip Range POC",
+  "name": "Flixtra",
   "version": "1.0",
-  "description": "Proof of concept extension that skips a specified time range in Netflix videos.",
+  "description": "A Chrome extension that provides extra features to Netflix.",
   "permissions": [
     "activeTab", 
     "storage",
@@ -38,3 +38,4 @@
     "service_worker": "background.js"
   }
 }
+
