@@ -15,7 +15,7 @@ chrome.storage.onChanged.addListener(async (changes) => {
     if (changes.commentData) {
         const video = document.querySelector("video");
         if (video) {
-            comment = changes.commentData?.comment;
+            comment = changes.commentData.newValue?.comment
             user = "test_user"; // test user for now
             showId = getNetflixTrackId();
             commentStartTime = video.currentTime;
@@ -42,10 +42,10 @@ async function postComment() {
     if (comment) {
         let postData = {
             "user": user,
-            "showId": showId,
+            "showId": showId,         
             "comment": comment,
-            "startTime": commentStartTime,
-            "endTime": commentStartTime + 15
+            "startTime": String(commentStartTime), 
+            "endTime": String(commentStartTime + 15)
         }
 
         const post_comments_url = "http://127.0.0.1:8000/post_comment";
