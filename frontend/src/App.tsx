@@ -8,6 +8,7 @@ function App() {
   const [filterMethod, setFilterMethod] = useState("");
   const [comment, setComment] = useState("");
   const [pgify, setPgify] = useState(false);
+  const [showComments, setShowComments] = useState(false);
 
   // testing - constant time ranges 
   const startNum = 10;
@@ -22,7 +23,8 @@ function App() {
         end: endNum
       },
       filterMethod: filterMethod,
-      pgifyActive: pgify
+      pgifyActive: pgify,
+      showComments: showComments
     })
   }
 
@@ -73,7 +75,7 @@ function App() {
       </div>
       <div className="flex items-center justify-between">
         <h2>show comments section</h2>
-        <Switch />
+        <Switch onClick={() => setShowComments(!showComments)}/>
       </div>
       {/* Post a Comment Section */}
       <div className="flex flex-col gap-2">
