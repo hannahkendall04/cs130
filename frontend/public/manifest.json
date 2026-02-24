@@ -11,7 +11,8 @@
   ],
   "host_permissions": [
     "https://*.netflix.com/*",
-    "https://*.nflxvideo.net/*"
+    "https://*.nflxvideo.net/*",
+    "http://127.0.0.1:8000/*"
   ],
   "action": {
     "default_popup": "index.html"
@@ -31,6 +32,11 @@
     {
       "matches": ["https://www.netflix.com/*"],
       "js": ["subtitles.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://www.netflix.com/*"],
+      "js": ["comments.js"],
       "run_at": "document_idle"
     }
   ],

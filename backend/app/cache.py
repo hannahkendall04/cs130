@@ -1,11 +1,38 @@
+# used for database tools for comment storage and timestamp caching
+import os
 from datetime import datetime
 from typing import List
 from motor.motor_asyncio import AsyncIOMotorCollection
-
+from dotenv import load_dotenv
+from motor.motor_asyncio import AsyncIOMotorClient
+from pydantic import BaseModel
 from app.filters.skip_range import SkipRange
-from database import database
 
-timestamp_collection: AsyncIOMotorCollection = database["timestamp_cache"]
+
+load_dotenv()
+
+MONGODB_URL = os.getenv("MONGODB_URL")
+DB_NAME = os.getenv("DB_NAME")
+
+client = AsyncIOMotorClient(MONGODB_URL)
+db = client[DB_NAME]
+timestamp_collection = db["timestamp_cache"]
+
+
+class Comment(BaseModel):
+    comment: str
+    showId: str # subject to change - identifier for show
+    startTime: str # subject to change - start time identifier
+    endTime: str # subject to change - end time identifier
+    user: str # subject to change - posting user
+
+class TimestampCache(BaseModel):
+    showID: str
+    filters: list[str]
+    timestamps: list[dict]
+    created_at: str
+
+timestamp_collection: AsyncIOMotorCollection = db["timestamp_cache"]
 
 
 def serialize_skip_ranges(ranges: List[SkipRange]) -> List[dict]:

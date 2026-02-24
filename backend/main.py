@@ -1,13 +1,14 @@
 from fastapi import FastAPI, HTTPException, Query
 from contextlib import asynccontextmanager
-from database.database import client, database, Comment
 from app.cache import SkipRange
 import app.cache as db_utils
+from app.cache import Comment
 from app.filters.detector import analyze_subtitles, SubtitleBlock
 from app.filters.srt_parser import parse_srt
 from app.filters.categories import FilterCategory
 from typing import List, Optional
 from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
 
 class AnalyzeSubtitlesRequest(BaseModel):
     subtitle_content: str
@@ -25,7 +26,7 @@ async def lifespan(app: FastAPI):
     # connect to DB
     print("Connecting to MongoDB...")
     try:
-        await client.admin.command('ping')
+        await db_utils.client.admin.command('ping')
         print("Connected")
     except Exception as e:
         print(f"Connection failed: {e}")
@@ -34,10 +35,23 @@ async def lifespan(app: FastAPI):
 
     # close DB connection
     print("Closing MongoDB connection...")
-    client.close()
+    db_utils.client.close()
     print("Connection closed.")
 
 app = FastAPI(lifespan=lifespan)
+
+origins = [
+    "https://www.netflix.com",
+    "chrome-extension://lmbjepbjkhefnjijkgdjdhgdlaecnefp"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 async def root():
@@ -46,8 +60,9 @@ async def root():
 
 @app.post("/post_comment")
 async def post_comment(comment: Comment):
+    print(f"Received comment:\n {comment.user}\n {comment.comment}\n {comment.showId}\n {comment.startTime}\n {comment.endTime}\n")
     try:
-        result = await database["comments"].insert_one(comment.dict())
+        result = await db_utils.db["comments"].insert_one(comment.dict())
         return {"id": str(result.inserted_id), "status": "success"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -56,7 +71,7 @@ async def post_comment(comment: Comment):
 @app.get("/get_comments")
 async def get_comments(show_id: Optional[str] = None):
     try:
-        collection = database["comments"]
+        collection = db_utils.db["comments"]
         query = {} if show_id is None else {"showId": int(show_id)}
         comments = await collection.find(query).to_list(length=100)
         

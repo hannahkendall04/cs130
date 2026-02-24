@@ -1,0 +1,95 @@
+console.log("flixtra comments script loaded");
+
+let comment = null;
+let user = null;
+let showId = null;
+let commentStartTime = null;
+
+// load time 
+chrome.storage.local.get(["commentData"], (data) => {
+    comment = data.commentData?.comment;
+})
+
+// check for changes 
+chrome.storage.onChanged.addListener(async (changes) => {
+    if (changes.commentData) {
+        const video = document.querySelector("video");
+        if (video) {
+            comment = changes.commentData.newValue?.comment
+            user = "test_user"; // test user for now
+            showId = getNetflixTrackId();
+            commentStartTime = video.currentTime;
+
+            // post comment
+            await postComment();
+
+            // clear data
+            chrome.storage.local.remove("commentData", function() {
+                if (chrome.runtime.lastError) {
+                    console.error(chrome.runtime.lastError);
+                } else {
+                    console.log('Comment data removed');
+                }
+            })
+        }
+    }
+})
+
+// frontend connection to post comments fastapi functionality 
+async function postComment() {
+    // only run if comment is not null
+    console.log("posting comment...")
+    if (comment) {
+        let postData = {
+            "user": user,
+            "showId": showId,         
+            "comment": comment,
+            "startTime": String(commentStartTime), 
+            "endTime": String(commentStartTime + 15)
+        }
+
+        const post_comments_url = "http://127.0.0.1:8000/post_comment";
+
+        try {
+            const response = await fetch(post_comments_url, {
+                method: "POST",
+                headers: {
+                    "Accept": "application/json",
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(postData)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(`HTTP error! Status: ${response.status}, Details: ${errorData.detail}`);
+            }
+
+            const result = await response.json();
+            console.log(`Successfully posted comment: ${result}`);
+
+        } catch (error) {
+            console.error(`Error posting comment: ${error}`);
+        }
+    }
+}
+
+function getNetflixTrackId() {
+  try {
+    const pathname = window.location.pathname;
+    const pathSegments = pathname.split('/');
+    
+    // The ID is the last segment in the path
+    const trackId = pathSegments[pathSegments.length - 1]; 
+
+    // Validate if the ID is a number
+    if (/^\d+$/.test(trackId)) {
+      return trackId;
+    }
+  } catch (error) {
+    console.error("Invalid URL:", error);
+  }
+  return null; // Return null if ID not found or URL is invalid
+}
+
+// frontend connection to get comments fastapi functionality
