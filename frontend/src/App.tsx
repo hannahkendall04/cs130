@@ -7,10 +7,11 @@ function App() {
 
   const [filterMethod, setFilterMethod] = useState("");
   const [comment, setComment] = useState("");
+  const [pgify, setPgify] = useState(false);
 
   // testing - constant time ranges 
   const startNum = 10;
-  const endNum = 13;
+  const endNum = 30;
   // end testing 
 
   // testing - constant time range on save
@@ -20,7 +21,8 @@ function App() {
         start: startNum,
         end: endNum
       },
-      filterMethod: filterMethod
+      filterMethod: filterMethod,
+      pgifyActive: pgify
     })
   }
 
@@ -42,7 +44,7 @@ function App() {
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
           <h2>pg-ify</h2>
-          <Switch />
+          <Switch onClick={() => setPgify(!pgify)} />
         </div>
         <div className="flex items-center gap-2">
           <Checkbox />

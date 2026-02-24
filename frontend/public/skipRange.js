@@ -5,6 +5,7 @@ let endTime = null;
 let filterMethod = "";
 let bleeping = false;
 let bleepCtx = null;
+let filterContent = false;
 
 // load time
 chrome.storage.local.get(["skipRange", "filterMethod"], (data) => {
@@ -22,6 +23,9 @@ chrome.storage.onChanged.addListener((changes) => {
   if (changes.filterMethod) {
     filterMethod = changes.filterMethod.newValue;
   }
+  if (changes.pgifyActive) {
+    filterContent = changes.pgifyActive.newValue;
+  }
 });
 
 function attachToVideo(video) {
@@ -33,26 +37,28 @@ function attachToVideo(video) {
 
   video.addEventListener("timeupdate", () => {
     console.log(`Current time: ${video.currentTime}`); // for debugging purposes/easy view in console
-    if (startTime !== null && endTime !== null) {
-      if (video.currentTime >= startTime && video.currentTime < endTime) {
-        if (filterMethod === "skip") {
-          window.postMessage({ type: "NETFLIX_SEEK", time: endTime * 1000 }, "*");
-        } else if ((filterMethod === "mute" || filterMethod === "bleep") && !video.muted) {
-          video.muted = true;
-        } else {
-          console.log("No filter method selected");
-        }
+    if (filterContent) {
+      if (startTime !== null && endTime !== null) {
+        if (video.currentTime >= startTime && video.currentTime < endTime) {
+          if (filterMethod === "skip") {
+            window.postMessage({ type: "NETFLIX_SEEK", time: endTime * 1000 }, "*");
+          } else if ((filterMethod === "mute" || filterMethod === "bleep") && !video.muted) {
+            video.muted = true;
+          } else {
+            console.log("No filter method selected");
+          }
 
-        if (filterMethod === "bleep" && !bleeping) {
-          startBleep();
-          bleeping = true;
-        }
+          if (filterMethod === "bleep" && !bleeping) {
+            startBleep();
+            bleeping = true;
+          }
 
-      } else if ((filterMethod === "mute" || filterMethod === "bleep") && video.muted) {
-        video.muted = false;
-        if (bleeping) {
-          stopBleep();
-          bleeping = false;
+        } else if ((filterMethod === "mute" || filterMethod === "bleep") && video.muted) {
+          video.muted = false;
+          if (bleeping) {
+            stopBleep();
+            bleeping = false;
+          }
         }
       }
     }
