@@ -6,6 +6,7 @@ import { useState } from 'react';
 function App() {
 
   const [filterMethod, setFilterMethod] = useState("");
+  const [comment, setComment] = useState("");
 
   // testing - constant time ranges 
   const startNum = 10;
@@ -21,6 +22,14 @@ function App() {
       },
       filterMethod: filterMethod
     })
+  }
+
+  const handlePost = () => {
+      chrome.storage.local.set({
+        commentData: {
+          comment: comment
+        }
+      })
   }
 
   return (
@@ -63,6 +72,25 @@ function App() {
       <div className="flex items-center justify-between">
         <h2>show comments section</h2>
         <Switch />
+      </div>
+      {/* Post a Comment Section */}
+      <div className="flex flex-col gap-2">
+        <h2>post a comment</h2>
+        <textarea
+          className="w-full rounded border border-gray-300 p-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-400"
+          rows={3}
+          placeholder="Write a comment..."
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+        />
+        <button
+          id="postButton"
+          className="w-full rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={handlePost}
+          disabled={!comment.trim()}
+        >
+          post
+        </button>
       </div>
       <div className="flex items-center">
         <button id="saveButton" className="w-full rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-700" onClick={handleSave}>save</button>
