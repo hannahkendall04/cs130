@@ -4,10 +4,11 @@ let comment = null;
 let user = null;
 let showId = null;
 let commentStartTime = null;
-
+let showComments = false;
 // load time 
-chrome.storage.local.get(["commentData"], (data) => {
+chrome.storage.local.get(["commentData", "showComments"], (data) => {
     comment = data.commentData?.comment;
+    showComments = data.showComments;
 })
 
 // check for changes 
@@ -33,13 +34,21 @@ chrome.storage.onChanged.addListener(async (changes) => {
             })
         }
     }
+
+    if (changes.showComments) {
+        showComments = changes.showComments.newValue;
+        showId = getNetflixTrackId();
+
+        // get comments 
+        await getComments();
+    }
 })
 
 // frontend connection to post comments fastapi functionality 
 async function postComment() {
     // only run if comment is not null
     console.log("posting comment...")
-    if (comment) {
+    if (comment && comment !== "") {
         let postData = {
             "user": user,
             "showId": showId,         
@@ -92,4 +101,38 @@ function getNetflixTrackId() {
   return null; // Return null if ID not found or URL is invalid
 }
 
+
 // frontend connection to get comments fastapi functionality
+async function getComments() {
+    // only run if showComments is true
+    if (showComments) {
+
+        let getData = {
+            "show_id": showId
+        }
+
+        const get_comments_url = "http://127.0.0.1:8000/get_comments";
+
+        try {
+            const response = await fetch(get_comments_url, {
+                method: "POST",
+                header: {
+                    "Accept": "application/json",
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(getData)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(`HTTP error! Status: ${response.status}, Details: ${errorData.detail}`);
+            }
+
+            const result = await response.json();
+            console.log(`Successfully grabbed comments! ${result}`);
+        } catch(error) {
+            console.error(`Error getting comments: ${error}`);
+        }
+    }
+
+}

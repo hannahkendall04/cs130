@@ -68,7 +68,7 @@ async def post_comment(comment: Comment):
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@app.get("/get_comments")
+@app.post("/get_comments")
 async def get_comments(show_id: Optional[str] = None):
     try:
         collection = db_utils.db["comments"]
@@ -78,6 +78,8 @@ async def get_comments(show_id: Optional[str] = None):
         # Convert ObjectId to string for JSON serialization
         for comment in comments:
             comment["_id"] = str(comment["_id"])
+
+        print(f"Comments: {comments}")
         
         return {"comments": comments, "count": len(comments)}
     except Exception as e:
