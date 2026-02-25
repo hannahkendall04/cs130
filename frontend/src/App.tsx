@@ -25,7 +25,8 @@ function App() {
       filterMethod: filterMethod,
       pgifyActive: pgify,
       showComments: showComments
-    })
+    });
+    alert("Saved filter options")
   }
 
   const handlePost = () => {
@@ -33,7 +34,8 @@ function App() {
         commentData: {
           comment: comment
         }
-      })
+      });
+      alert("Posted comment!");
   }
 
   return (
@@ -67,9 +69,9 @@ function App() {
         <div className="flex gap-2 flex-col">
           <h2>Filter method</h2>
           <div className="flex px-2 gap-2">
-            <button id="skipButton" className="w-[50%] rounded bg-blue-500 text-white mb-2 hover:bg-blue-700" onClick={() => setFilterMethod("skip")}>skip</button>
-            <button id="muteButton" className="w-[50%] rounded bg-blue-500 text-white mb-2 hover:bg-blue-700" onClick={() => setFilterMethod("mute")}>mute</button>
-            <button id="muteButton" className="w-[50%] rounded bg-blue-500 text-white mb-2 hover:bg-blue-700" onClick={() => setFilterMethod("bleep")}>bleep</button>
+            <button id="skipButton" className={`w-[50%] cursor-pointer rounded text-white mb-2 ${filterMethod === "skip" ? "bg-blue-700" : "bg-blue-500 hover:bg-blue-700"}`} onClick={() => setFilterMethod("skip")}>skip</button>
+            <button id="muteButton" className={`w-[50%] cursor-pointer rounded text-white mb-2 ${filterMethod === "mute" ? "bg-blue-700" : "bg-blue-500 hover:bg-blue-700"}`} onClick={() => setFilterMethod("mute")}>mute</button>
+            <button id="muteButton" className={`w-[50%] cursor-pointer rounded text-white mb-2 ${filterMethod === "bleep" ? "bg-blue-700" : "bg-blue-500 hover:bg-blue-700"}`} onClick={() => setFilterMethod("bleep")}>bleep</button>
           </div>
         </div>
       </div>
