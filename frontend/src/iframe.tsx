@@ -6,6 +6,17 @@ import "./App.css";
 function App() {
   const [width, setWidth] = useState(400);
   const [dragging, setDragging] = useState(false);
+  const [comment, setComment] = useState("");
+
+  const handlePost = () => {
+    chrome.storage.local.set({
+      commentData: {
+        comment: comment,
+      },
+    });
+    alert("Posted comment!");
+    setComment("");
+  };
 
   useEffect(() => {
     // Tell parent page to resize
@@ -82,6 +93,8 @@ function App() {
               padding: 12,
               width: "100%",
             }}
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
           />
           <div
             style={{
@@ -93,7 +106,7 @@ function App() {
               padding: 4,
             }}
           >
-            <ArrowUp color="white" size={20} />
+            <ArrowUp onClick={handlePost} color="white" size={20} />
           </div>
         </div>
       </div>

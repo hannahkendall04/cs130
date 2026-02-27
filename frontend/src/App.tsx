@@ -6,7 +6,7 @@ import { useState, useEffect, useRef } from "react";
 
 function App() {
   const [filterMethod, setFilterMethod] = useState("");
-  const [comment, setComment] = useState("");
+  // const [comment, setComment] = useState("");
   const [pgify, setPgify] = useState(false);
   const [showComments, setShowComments] = useState(false);
 
@@ -53,15 +53,15 @@ function App() {
     window.close();
   };
 
-  const handlePost = () => {
-    chrome.storage.local.set({
-      commentData: {
-        comment: comment,
-      },
-    });
-    alert("Posted comment!");
-    setComment("");
-  };
+  // const handlePost = () => {
+  //   chrome.storage.local.set({
+  //     commentData: {
+  //       comment: comment,
+  //     },
+  //   });
+  //   alert("Posted comment!");
+  //   setComment("");
+  // };
 
   const saveDisplayName = (name: string) => {
     chrome.storage.local.set({ displayName: name });
@@ -170,7 +170,7 @@ function App() {
           onCheckedChange={(value) => setShowComments(value)}
         />
       </div>
-      {/* Post a Comment Section */}
+      {/* Post a Comment Section
       <div className="flex flex-col gap-2">
         <h2>post a comment</h2>
         <textarea
@@ -188,7 +188,7 @@ function App() {
         >
           post
         </button>
-      </div>
+      </div> */}
       <div className="flex items-center">
         <button
           id="saveButton"
