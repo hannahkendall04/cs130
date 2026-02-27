@@ -46,7 +46,7 @@ function App() {
           width: "3px",
           height: "100%",
           cursor: "ew-resize",
-          background: "#ccc",
+          background: "#333",
         }}
       />
       {/* COMMENT SECTION */}
@@ -75,7 +75,8 @@ function App() {
             placeholder="Write a comment..."
             style={{
               resize: "none",
-              backgroundColor: "#ccc",
+              backgroundColor: "#1E1E1E",
+              color: "#E5E5E5",
               border: "none",
               borderRadius: 5,
               padding: 12,
@@ -84,8 +85,8 @@ function App() {
           />
           <div
             style={{
-              borderRadius: "calc(infinity * 1px)",
-              background: "black",
+              borderRadius: "9999px",
+              background: "#E50914",
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",

@@ -107,129 +107,120 @@
 :root {
   --radius: 0.625rem;
 
-  --background: oklch(1 0 0);
+  /* Netflix-inspired palette */
+  --background: #141414;             /* dark canvas */
 
-  --foreground: oklch(0.145 0 0);
+  --foreground: #E5E5E5;             /* off-white text */
 
-  --card: oklch(1 0 0);
+  --card: #1E1E1E;                   /* slightly lighter container */
 
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: #FFFFFF;        /* white text on cards */
 
-  --popover: oklch(1 0 0);
+  --popover: #1E1E1E;                /* popover same as card */
 
-  --popover-foreground: oklch(0.145 0 0);
+  --popover-foreground: #FFFFFF;
 
-  --primary: oklch(0.205 0 0);
+  --primary: #E50914;                /* Netflix red */
 
-  --primary-foreground: oklch(0.985 0 0);
+  --primary-foreground: #FFFFFF;
 
-  --secondary: oklch(0.97 0 0);
+  --secondary: #E5E5E5;              /* light neutral */
 
-  --secondary-foreground: oklch(0.205 0 0);
+  --secondary-foreground: #141414;
 
-  --muted: oklch(0.97 0 0);
+  --muted: #444444;                  /* muted grey */
 
-  --muted-foreground: oklch(0.556 0 0);
+  --muted-foreground: #CCCCCC;
 
-  --accent: oklch(0.97 0 0);
+  --accent: #E50914;                 /* reuse red for accent */
 
-  --accent-foreground: oklch(0.205 0 0);
+  --accent-foreground: #FFFFFF;
 
   --destructive: oklch(0.577 0.245 27.325);
 
-  --border: oklch(0.922 0 0);
+  --border: #333333;                /* subtle boundaries */
 
-  --input: oklch(0.922 0 0);
+  --input: #333333;                 /* dark input backgrounds */
 
-  --ring: oklch(0.708 0 0);
+  --ring: #E50914;                  /* red focus rings */
 
-  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-1: #E50914;
+  --chart-2: #B81D24;
+  --chart-3: #221F1F;
+  --chart-4: #333333;
+  --chart-5: #444444;
 
-  --chart-2: oklch(0.6 0.118 184.704);
-
-  --chart-3: oklch(0.398 0.07 227.392);
-
-  --chart-4: oklch(0.828 0.189 84.429);
-
-  --chart-5: oklch(0.769 0.188 70.08);
-
-  --sidebar: oklch(0.985 0 0);
-
-  --sidebar-foreground: oklch(0.145 0 0);
-
-  --sidebar-primary: oklch(0.205 0 0);
-
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-
-  --sidebar-accent: oklch(0.97 0 0);
-
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-
-  --sidebar-border: oklch(0.922 0 0);
-
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: #141414;
+  --sidebar-foreground: #E5E5E5;
+  --sidebar-primary: #E50914;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #E50914;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: #333333;
+  --sidebar-ring: #E50914;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
+  /* dark variant stays consistent with Netflix dark theme */
+  --background: #141414;
 
-  --foreground: oklch(0.985 0 0);
+  --foreground: #FFFFFF;
 
-  --card: oklch(0.205 0 0);
+  --card: #1E1E1E;
 
-  --card-foreground: oklch(0.985 0 0);
+  --card-foreground: #FFFFFF;
 
-  --popover: oklch(0.205 0 0);
+  --popover: #1E1E1E;
 
-  --popover-foreground: oklch(0.985 0 0);
+  --popover-foreground: #FFFFFF;
 
-  --primary: oklch(0.922 0 0);
+  --primary: #E50914;
 
-  --primary-foreground: oklch(0.205 0 0);
+  --primary-foreground: #FFFFFF;
 
-  --secondary: oklch(0.269 0 0);
+  --secondary: #E5E5E5;
 
-  --secondary-foreground: oklch(0.985 0 0);
+  --secondary-foreground: #141414;
 
-  --muted: oklch(0.269 0 0);
+  --muted: #444444;
 
-  --muted-foreground: oklch(0.708 0 0);
+  --muted-foreground: #CCCCCC;
 
-  --accent: oklch(0.269 0 0);
+  --accent: #E50914;
 
-  --accent-foreground: oklch(0.985 0 0);
+  --accent-foreground: #FFFFFF;
 
-  --destructive: oklch(0.704 0.191 22.216);
+  --destructive: #FF0000;
 
-  --border: oklch(1 0 0 / 10%);
+  --border: rgba(255,255,255,0.1);
 
-  --input: oklch(1 0 0 / 15%);
+  --input: rgba(255,255,255,0.15);
 
-  --ring: oklch(0.556 0 0);
+  --ring: #E50914;
 
-  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-1: #E50914;
 
-  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-2: #B81D24;
 
-  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-3: #221F1F;
 
-  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-4: #333333;
 
-  --chart-5: oklch(0.645 0.246 16.439);
+  --chart-5: #444444;
 
-  --sidebar: oklch(0.205 0 0);
+  --sidebar: #141414;
 
-  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-foreground: #FFFFFF;
 
-  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary: #E50914;
 
-  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-primary-foreground: #FFFFFF;
 
-  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent: #E50914;
 
-  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-accent-foreground: #FFFFFF;
 
-  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-border: rgba(255,255,255,0.1);
 
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar-ring: #E50914;
 }
