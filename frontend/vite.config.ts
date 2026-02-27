@@ -1,4 +1,4 @@
-import path from "path";
+import path, { resolve } from "path";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { viteStaticCopy } from "vite-plugin-static-copy";
@@ -14,10 +14,14 @@ export default defineConfig({
         {
           src: "public/manifest.json",
           dest: ".",
-        }, 
+        },
         {
           src: "public/skipRange.js",
-          dest: "."
+          dest: ".",
+        },
+        {
+          src: "public/iframe.html",
+          dest: ".",
         },
       ],
     }),
@@ -33,12 +37,13 @@ export default defineConfig({
       input: {
         main: "./index.html",
         background: "./src/background.js",
+        iframe: path.resolve(__dirname, "src/iframe.tsx"),
       },
       output: {
         entryFileNames: (chunkInfo) => {
-          return chunkInfo.name === "background"
-            ? "background.js"
-            : "assets/[name]-[hash].js";
+          if (chunkInfo.name === "background") return "background.js";
+          if (chunkInfo.name === "iframe") return "iframe.js";
+          return "[name]-[hash].js"; // optional for popup etc.
         },
       },
     },

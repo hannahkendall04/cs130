@@ -19,6 +19,9 @@ chrome.storage.local.get(["showComments"], (data) => {
     wrapNetflixPage();
     showId = getNetflixTrackId();
     getComments();
+  } else {
+    console.log("not showing comments 1");
+    unwrapNetflixPage();
   }
 });
 
@@ -55,7 +58,7 @@ chrome.storage.onChanged.addListener(async (changes) => {
       wrapNetflixPage();
       await getComments();
     } else {
-      console.log("not showing comments");
+      console.log("not showing comments 2");
       unwrapNetflixPage();
     }
   }
@@ -155,47 +158,51 @@ async function getComments() {
 }
 
 function wrapNetflixPage() {
-  if (document.getElementById("flixtra-root")) return;
+  if (document.getElementById("flixtra-iframe")) return;
 
-  const body = document.body;
+  const DEFAULT_WIDTH = 400;
 
-  // Create container for original Netflix app
-  const netflixContainer = document.createElement("div");
-  netflixContainer.id = "flixtra-netflix-content";
-  netflixContainer.style.height = "100%";
-  netflixContainer.style.width = "100%";
+  const iframe = document.createElement("iframe");
+  iframe.id = "flixtra-iframe";
+  iframe.src = chrome.runtime.getURL("iframe.html");
 
-  // Move all existing body children into netflixContainer
-  while (body.firstChild) {
-    netflixContainer.appendChild(body.firstChild);
-  }
+  iframe.style.position = "fixed";
+  iframe.style.top = "0";
+  iframe.style.right = "0";
+  iframe.style.width = DEFAULT_WIDTH + "px";
+  iframe.style.height = "100vh";
+  iframe.style.border = "none";
+  iframe.style.zIndex = "999999";
+  iframe.style.backgroundColor = "white";
 
-  // Create React mount point
-  const root = document.createElement("div");
-  root.id = "flixtra-root";
-  root.style.height = "100vh";
-  root.style.width = "100vw";
+  document.body.appendChild(iframe);
 
-  body.appendChild(root);
+  // Push Netflix content left
+  document.body.style.marginRight = DEFAULT_WIDTH + "px";
 
-  console.log("Netflix page prepared for React mount.");
+  // Listen for resize messages from iframe
+  window.addEventListener("message", (event) => {
+    if (event.data?.type === "FLIXTRA_RESIZE") {
+      const newWidth = event.data.width;
 
-  mountFlixtraUI();
+      iframe.style.width = newWidth + "px";
+      document.body.style.marginRight = newWidth + "px";
+    }
+  });
 
-  console.log("Mounted UI");
+  document.body.style.transition = "margin-right 0.15s ease";
 }
 
 function unwrapNetflixPage() {
-  const wrapper = document.getElementById("flixtra-wrapper");
-  if (!wrapper) return;
-
-  const body = document.body;
-
-  while (wrapper.firstChild) {
-    body.appendChild(wrapper.firstChild);
+  console.log("unwrapping netflix page");
+  // Remove the iframe
+  const iframe = document.getElementById("flixtra-iframe");
+  if (iframe) {
+    iframe.remove();
   }
 
-  wrapper.remove();
+  // Reset Netflix page margin
+  document.body.style.marginRight = "0";
 
-  console.log("Netflix page unwrapped.");
+  console.log("Flixtra iframe removed, Netflix page restored.");
 }
