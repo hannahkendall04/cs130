@@ -1,6 +1,7 @@
 import "./App.css";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
+import { Edit } from "lucide-react";
 import { useState, useEffect } from "react";
 
 function App() {
@@ -53,7 +54,10 @@ function App() {
     <div className="flex w-96 flex-col gap-4 p-4">
       <h1 className="w-full text-center">flixtra</h1>
       <div className="flex flex-col gap-2">
-        <h2>display name</h2>
+        <div className="flex items-center gap-2">
+          <h2>display name</h2>
+          <Edit size={16} color="grey" />
+        </div>
         <p>lorem ipsum</p>
       </div>
       <div className="flex flex-col gap-2">
@@ -78,25 +82,25 @@ function App() {
           <p>violence and abuse</p>
         </div>
         <div className="flex flex-col gap-2">
-          <h2>Filter method</h2>
-          <div className="flex gap-2 px-2">
+          <h2>filter method</h2>
+          <div className="flex gap-2">
             <button
               id="skipButton"
-              className={`mb-2 w-[50%] cursor-pointer rounded text-white ${filterMethod === "skip" ? "bg-blue-700" : "bg-blue-500 hover:bg-blue-700"}`}
+              className={`filter-button ${filterMethod === "skip" ? "bg-blue-700" : "bg-blue-500 hover:bg-blue-700"}`}
               onClick={() => setFilterMethod("skip")}
             >
               skip
             </button>
             <button
               id="muteButton"
-              className={`mb-2 w-[50%] cursor-pointer rounded text-white ${filterMethod === "mute" ? "bg-blue-700" : "bg-blue-500 hover:bg-blue-700"}`}
+              className={`filter-button ${filterMethod === "mute" ? "bg-blue-700" : "bg-blue-500 hover:bg-blue-700"}`}
               onClick={() => setFilterMethod("mute")}
             >
               mute
             </button>
             <button
               id="muteButton"
-              className={`mb-2 w-[50%] cursor-pointer rounded text-white ${filterMethod === "bleep" ? "bg-blue-700" : "bg-blue-500 hover:bg-blue-700"}`}
+              className={`filter-button ${filterMethod === "bleep" ? "bg-blue-700" : "bg-blue-500 hover:bg-blue-700"}`}
               onClick={() => setFilterMethod("bleep")}
             >
               bleep
@@ -133,7 +137,7 @@ function App() {
       <div className="flex items-center">
         <button
           id="saveButton"
-          className="w-full rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-700"
+          className="w-full cursor-pointer rounded bg-blue-500 px-4 py-2 text-sm text-white hover:bg-blue-700"
           onClick={handleSave}
         >
           save
