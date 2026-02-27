@@ -50,6 +50,7 @@ function App() {
       showComments: showComments,
     });
     alert("Saved filter options");
+    window.close();
   };
 
   const handlePost = () => {
@@ -59,6 +60,7 @@ function App() {
       },
     });
     alert("Posted comment!");
+    setComment("");
   };
 
   const saveDisplayName = (name: string) => {
