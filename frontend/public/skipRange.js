@@ -1,33 +1,52 @@
 console.log("Netflix skip range content script loaded");
 
-let startTime = null;
-let endTime = null;
+let skipRanges = [];
 let filterMethod = "";
 let bleeping = false;
 let bleepCtx = null;
 let filterContent = false;
 
 // load time
-chrome.storage.local.get(["skipRange", "filterMethod"], (data) => {
-  startTime = data.skipRange?.start;
-  endTime = data.skipRange?.end;
+chrome.storage.local.get(["skipRanges", "skipRange", "filterMethod", "pgifyActive"], (data) => {
+  if (Array.isArray(data.skipRanges)) {
+    skipRanges = data.skipRanges;
+  } else if (data.skipRange?.start != null && data.skipRange?.end != null) {
+    skipRanges = [data.skipRange];
+  }
+
   filterMethod = data.filterMethod;
+  filterContent = data.pgifyActive === true;
 });
 
 // check for changes
 chrome.storage.onChanged.addListener((changes) => {
-  if (changes.skipRange) {
-    startTime = changes.skipRange.newValue?.start;
-    endTime = changes.skipRange.newValue?.end;
+  if (changes.skipRanges) {
+    skipRanges = Array.isArray(changes.skipRanges.newValue)
+      ? changes.skipRanges.newValue
+      : [];
+  } else if (changes.skipRange) {
+    const range = changes.skipRange.newValue;
+    skipRanges = range?.start != null && range?.end != null ? [range] : [];
   }
+
   if (changes.filterMethod) {
     filterMethod = changes.filterMethod.newValue;
   }
+
   if (changes.pgifyActive) {
     filterContent = changes.pgifyActive.newValue;
   }
 });
 
+function getActiveRange(currentTime) {
+  return skipRanges.find(
+    (range) =>
+      typeof range?.start === "number" &&
+      typeof range?.end === "number" &&
+      currentTime >= range.start &&
+      currentTime < range.end,
+  );
+}
 function attachToVideo(video) {
   video.addEventListener("pause", () => pauseBleep());
 
@@ -38,27 +57,26 @@ function attachToVideo(video) {
   video.addEventListener("timeupdate", () => {
     console.log(`Current time: ${video.currentTime}`); // for debugging purposes/easy view in console
     if (filterContent) {
-      if (startTime !== null && endTime !== null) {
-        if (video.currentTime >= startTime && video.currentTime < endTime) {
-          if (filterMethod === "skip") {
-            window.postMessage({ type: "NETFLIX_SEEK", time: endTime * 1000 }, "*");
-          } else if ((filterMethod === "mute" || filterMethod === "bleep") && !video.muted) {
-            video.muted = true;
-          } else {
-            console.log("No filter method selected");
-          }
+      const activeRange = getActiveRange(video.currentTime);
 
-          if (filterMethod === "bleep" && !bleeping) {
-            startBleep();
-            bleeping = true;
-          }
+      if (activeRange) {
+        if (filterMethod === "skip") {
+          window.postMessage({ type: "NETFLIX_SEEK", time: activeRange.end * 1000 }, "*");
+        } else if ((filterMethod === "mute" || filterMethod === "bleep") && !video.muted) {
+          video.muted = true;
+        } else {
+          console.log("No filter method selected");
+        }
 
-        } else if ((filterMethod === "mute" || filterMethod === "bleep") && video.muted) {
-          video.muted = false;
-          if (bleeping) {
-            stopBleep();
-            bleeping = false;
-          }
+        if (filterMethod === "bleep" && !bleeping) {
+          startBleep();
+          bleeping = true;
+        }
+      } else if ((filterMethod === "mute" || filterMethod === "bleep") && video.muted) {
+        video.muted = false;
+        if (bleeping) {
+          stopBleep();
+          bleeping = false;
         }
       }
     }

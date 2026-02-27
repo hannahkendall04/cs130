@@ -4,11 +4,28 @@ import { Switch } from "@/components/ui/switch";
 import { Edit, Check } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 
+const FILTER_KEYS = [
+  "profanity",
+  "sexual_content",
+  "substance_use",
+  "violence",
+] as const;
+
+type FilterKey = (typeof FILTER_KEYS)[number];
+
 function App() {
   const [filterMethod, setFilterMethod] = useState("");
   const [comment, setComment] = useState("");
   const [pgify, setPgify] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [enabledFilterState, setEnabledFilterState] = useState<
+    Record<FilterKey, boolean>
+  >({
+    profanity: true,
+    sexual_content: true,
+    substance_use: true,
+    violence: true,
+  });
 
   const [displayName, setDisplayName] = useState("");
   const [editingName, setEditingName] = useState(false);
@@ -22,35 +39,51 @@ function App() {
 
   useEffect(() => {
     chrome.storage.local.get(
-      ["filterMethod", "pgifyActive", "showComments", "displayName"],
+      [
+        "filterMethod",
+        "pgifyActive",
+        "showComments",
+        "displayName",
+        "enabledFilters",
+      ],
       (data) => {
         if (data.filterMethod) setFilterMethod(data.filterMethod);
         if (typeof data.pgifyActive === "boolean") setPgify(data.pgifyActive);
         if (typeof data.showComments === "boolean")
           setShowComments(data.showComments);
         if (typeof data.displayName === "string") setDisplayName(data.displayName);
+
+        if (Array.isArray(data.enabledFilters)) {
+          setEnabledFilterState({
+            profanity: data.enabledFilters.includes("profanity"),
+            sexual_content: data.enabledFilters.includes("sexual_content"),
+            substance_use: data.enabledFilters.includes("substance_use"),
+            violence: data.enabledFilters.includes("violence"),
+          });
+        }
       },
     );
   }, []);
 
-  // testing - constant time ranges
-  const startNum = 10;
-  const endNum = 30;
-  // end testing
-
-  // testing - constant time range on save
   const handleSave = () => {
+    const enabledFilters = FILTER_KEYS.filter((key) => enabledFilterState[key]);
+
     chrome.storage.local.set({
-      skipRange: {
-        start: startNum,
-        end: endNum,
-      },
       filterMethod: filterMethod,
       pgifyActive: pgify,
       showComments: showComments,
+      enabledFilters,
     });
+
     alert("Saved filter options");
     window.close();
+  };
+
+  const updateFilter = (key: FilterKey, checked: boolean) => {
+    setEnabledFilterState((prev) => ({
+      ...prev,
+      [key]: checked,
+    }));
   };
 
   const handlePost = () => {
@@ -118,22 +151,38 @@ function App() {
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
           <h2>pg-ify</h2>
-          <Switch onClick={() => setPgify(!pgify)} />
+          <Switch checked={pgify} onCheckedChange={(value) => setPgify(value)} />
         </div>
         <div className="flex items-center gap-2">
-          <Checkbox />
+          <Checkbox
+            checked={enabledFilterState.profanity}
+            onCheckedChange={(value) => updateFilter("profanity", value === true)}
+          />
           <p>profanity</p>
         </div>
         <div className="flex items-center gap-2">
-          <Checkbox />
+          <Checkbox
+            checked={enabledFilterState.sexual_content}
+            onCheckedChange={(value) =>
+              updateFilter("sexual_content", value === true)
+            }
+          />
           <p>sexual content</p>
         </div>
         <div className="flex items-center gap-2">
-          <Checkbox />
+          <Checkbox
+            checked={enabledFilterState.substance_use}
+            onCheckedChange={(value) =>
+              updateFilter("substance_use", value === true)
+            }
+          />
           <p>substance use</p>
         </div>
         <div className="flex items-center gap-2">
-          <Checkbox />
+          <Checkbox
+            checked={enabledFilterState.violence}
+            onCheckedChange={(value) => updateFilter("violence", value === true)}
+          />
           <p>violence and abuse</p>
         </div>
         <div className="flex flex-col gap-2">

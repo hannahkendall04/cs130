@@ -8,9 +8,33 @@ function getNetflixTitle() {
   return "Netflix_Subtitles";
 }
 
+function getNetflixShowId() {
+  try {
+    const pathname = window.location.pathname;
+    const pathSegments = pathname.split("/");
+    const idCandidate = pathSegments[pathSegments.length - 1];
+
+    if (/^\d+$/.test(idCandidate)) {
+      return idCandidate;
+    }
+  } catch (error) {
+    console.error("Unable to parse show ID", error);
+  }
+
+  return null;
+}
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "GET_TITLE") {
     sendResponse({ title: getNetflixTitle() });
   }
+
+  if (message.type === "GET_VIDEO_INFO") {
+    sendResponse({
+      title: getNetflixTitle(),
+      showId: getNetflixShowId(),
+    });
+  }
+
   return true; 
 });
