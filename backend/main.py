@@ -21,6 +21,7 @@ class SkipRangeResponse(BaseModel):
     end_ms: int
     category: str
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # connect to DB
@@ -95,6 +96,8 @@ async def post_timestamps(skip_ranges: List[SkipRange], filters: List[str], show
 
 @app.get("/get_timestamps")
 async def get_timestamps(show_id: str, filters: List[str] = Query(...)):
+    print("=== get_timestamps called ===", show_id, filters)
+
     try:
         timestamps = await db_utils.get_cached_timestamps(show_id=show_id, filters=filters)
         if timestamps is None:
@@ -108,6 +111,10 @@ async def get_timestamps(show_id: str, filters: List[str] = Query(...)):
 @app.post("/analyze_subtitles")
 async def analyze_subtitles_endpoint(request: AnalyzeSubtitlesRequest):
     try:
+        print("=== analyze_subtitles called ===")
+        print("show_id:", request.show_id)
+        print("enabled_filters:", request.enabled_filters)
+        print("subtitle chars:", len(request.subtitle_content))
         # Parse SRT content
         parsed = parse_srt(request.subtitle_content)
         
