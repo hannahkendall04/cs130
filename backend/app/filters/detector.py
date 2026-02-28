@@ -50,13 +50,17 @@ def _merge_skip_ranges(
 ) -> list[SkipRange]:
     """
     Merge SkipRanges of the same category if they overlap OR are within gap_ms.
-    Uses your TimeRange.merge(), which requires overlap, so we "bridge" tiny gaps.
+    NOTE: TimeRange.merge() requires true overlap, so for "gap merge" we build
+    the union range manually.
     """
     if not ranges:
         return []
 
-    # Sort by category then time
-    ranges_sorted = sorted(ranges, key=lambda r: (r.category, r.time_range.start.ms, r.time_range.end.ms))
+    ranges_sorted = sorted(
+        ranges,
+        key=lambda r: (r.category, r.time_range.start.ms, r.time_range.end.ms),
+    )
+
     merged: list[SkipRange] = []
 
     for r in ranges_sorted:
@@ -66,24 +70,20 @@ def _merge_skip_ranges(
 
         last = merged[-1]
 
-        # Only merge within same category
         if last.category != r.category:
             merged.append(r)
             continue
 
+        last_start = last.time_range.start.ms
         last_end = last.time_range.end.ms
         curr_start = r.time_range.start.ms
+        curr_end = r.time_range.end.ms
 
-        # If overlapping, easy
-        if last.time_range.overlaps(r.time_range):
-            merged[-1] = SkipRange(last.time_range.merge(r.time_range), last.category)
-            continue
-
-        # If close enough, bridge gap so TimeRange.merge() is allowed
-        if curr_start - last_end <= gap_ms:
-            bridge = TimeRange(Timestamp(last_end), Timestamp(curr_start))
-            merged_tr = last.time_range.merge(bridge).merge(r.time_range)
-            merged[-1] = SkipRange(merged_tr, last.category)
+        # Overlap OR close enough (including touching)
+        if curr_start <= last_end + gap_ms:
+            new_start = min(last_start, curr_start)
+            new_end = max(last_end, curr_end)
+            merged[-1] = SkipRange.from_ms(new_start, new_end, last.category)
         else:
             merged.append(r)
 

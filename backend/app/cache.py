@@ -1,6 +1,6 @@
 # used for database tools for comment storage and timestamp caching
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List
 from motor.motor_asyncio import AsyncIOMotorCollection
 from dotenv import load_dotenv
@@ -69,7 +69,7 @@ async def save_timestamps(
         "showId": show_id,
         "filters": filters,
         "skip_ranges": serialize_skip_ranges(skip_ranges),
-        "created_at": datetime.now(datetime.timezone.utc),
+        "created_at": datetime.now(timezone.utc),
     }
 
     # Upsert prevents duplicate entries

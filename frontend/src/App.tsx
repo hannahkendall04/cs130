@@ -4,11 +4,29 @@ import { Switch } from "@/components/ui/switch";
 import { Edit, Check } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 
+const FILTER_KEYS = [
+  "profanity",
+  "sexual_content",
+  "substance_use",
+  "violence",
+] as const;
+
+type FilterKey = (typeof FILTER_KEYS)[number];
+type FilterMethod = "skip" | "mute" | "bleep";
+
 function App() {
-  const [filterMethod, setFilterMethod] = useState("");
+  const [filterMethod, setFilterMethod] = useState<FilterMethod>("skip");
   const [comment, setComment] = useState("");
   const [pgify, setPgify] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [enabledFilterState, setEnabledFilterState] = useState<
+    Record<FilterKey, boolean>
+  >({
+    profanity: true,
+    sexual_content: true,
+    substance_use: true,
+    violence: true,
+  });
 
   const [displayName, setDisplayName] = useState("");
   const [editingName, setEditingName] = useState(false);
@@ -22,35 +40,59 @@ function App() {
 
   useEffect(() => {
     chrome.storage.local.get(
-      ["filterMethod", "pgifyActive", "showComments", "displayName"],
+      [
+        "filterMethod",
+        "pgifyActive",
+        "showComments",
+        "displayName",
+        "enabledFilters",
+      ],
       (data) => {
-        if (data.filterMethod) setFilterMethod(data.filterMethod);
+        if (data.filterMethod === "skip" || data.filterMethod === "mute" || data.filterMethod === "bleep") {
+          setFilterMethod(data.filterMethod);
+        }
+
         if (typeof data.pgifyActive === "boolean") setPgify(data.pgifyActive);
-        if (typeof data.showComments === "boolean")
-          setShowComments(data.showComments);
+        if (typeof data.showComments === "boolean") setShowComments(data.showComments);
         if (typeof data.displayName === "string") setDisplayName(data.displayName);
+
+        if (Array.isArray(data.enabledFilters)) {
+          setEnabledFilterState({
+            profanity: data.enabledFilters.includes("profanity"),
+            sexual_content: data.enabledFilters.includes("sexual_content"),
+            substance_use: data.enabledFilters.includes("substance_use"),
+            violence: data.enabledFilters.includes("violence"),
+          });
+        }
       },
     );
   }, []);
 
-  // testing - constant time ranges
-  const startNum = 10;
-  const endNum = 30;
-  // end testing
+  const updateFilter = (key: FilterKey, checked: boolean) => {
+    setEnabledFilterState((prev) => ({
+      ...prev,
+      [key]: checked,
+    }));
+  };
 
-  // testing - constant time range on save
   const handleSave = () => {
-    chrome.storage.local.set({
-      skipRange: {
-        start: startNum,
-        end: endNum,
+    const enabledFilters = FILTER_KEYS.filter((key) => enabledFilterState[key]);
+
+    chrome.storage.local.set(
+      {
+        filterMethod,
+        pgifyActive: pgify,
+        showComments,
+        enabledFilters,
       },
-      filterMethod: filterMethod,
-      pgifyActive: pgify,
-      showComments: showComments,
-    });
-    alert("Saved filter options");
-    window.close();
+      () => {
+        // IMPORTANT: tell background to recompute skip ranges immediately
+        chrome.runtime.sendMessage({ type: "FLIXTRA_OPTIONS_UPDATED" });
+
+        alert("Saved filter options");
+        window.close();
+      },
+    );
   };
 
   const handlePost = () => {
@@ -75,6 +117,7 @@ function App() {
   return (
     <div className="flex w-96 flex-col gap-4 p-4 bg-background text-foreground">
       <h1 className="w-full text-center text-red-500">flixtra</h1>
+
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
           <h2>display name</h2>
@@ -88,6 +131,7 @@ function App() {
             </button>
           )}
         </div>
+
         {editingName ? (
           <div className="flex items-center gap-1">
             <input
@@ -115,47 +159,71 @@ function App() {
           </p>
         )}
       </div>
+
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
           <h2>pg-ify</h2>
-          <Switch onClick={() => setPgify(!pgify)} />
+          <Switch checked={pgify} onCheckedChange={(value) => setPgify(value)} />
         </div>
+
         <div className="flex items-center gap-2">
-          <Checkbox />
+          <Checkbox
+            checked={enabledFilterState.profanity}
+            onCheckedChange={(value) => updateFilter("profanity", value === true)}
+          />
           <p>profanity</p>
         </div>
+
         <div className="flex items-center gap-2">
-          <Checkbox />
+          <Checkbox
+            checked={enabledFilterState.sexual_content}
+            onCheckedChange={(value) => updateFilter("sexual_content", value === true)}
+          />
           <p>sexual content</p>
         </div>
+
         <div className="flex items-center gap-2">
-          <Checkbox />
+          <Checkbox
+            checked={enabledFilterState.substance_use}
+            onCheckedChange={(value) => updateFilter("substance_use", value === true)}
+          />
           <p>substance use</p>
         </div>
+
         <div className="flex items-center gap-2">
-          <Checkbox />
+          <Checkbox
+            checked={enabledFilterState.violence}
+            onCheckedChange={(value) => updateFilter("violence", value === true)}
+          />
           <p>violence and abuse</p>
         </div>
+
         <div className="flex flex-col gap-2">
           <h2>filter method</h2>
           <div className="flex gap-2">
             <button
               id="skipButton"
-              className={`filter-button ${filterMethod === "skip" ? "bg-red-700" : "bg-red-500 hover:bg-red-700"}`}
+              className={`filter-button ${
+                filterMethod === "skip" ? "bg-red-700" : "bg-red-500 hover:bg-red-700"
+              }`}
               onClick={() => setFilterMethod("skip")}
             >
               skip
             </button>
             <button
               id="muteButton"
-              className={`filter-button ${filterMethod === "mute" ? "bg-red-700" : "bg-red-500 hover:bg-red-700"}`}
+              className={`filter-button ${
+                filterMethod === "mute" ? "bg-red-700" : "bg-red-500 hover:bg-red-700"
+              }`}
               onClick={() => setFilterMethod("mute")}
             >
               mute
             </button>
             <button
-              id="muteButton"
-              className={`filter-button ${filterMethod === "bleep" ? "bg-red-700" : "bg-red-500 hover:bg-red-700"}`}
+              id="bleepButton"
+              className={`filter-button ${
+                filterMethod === "bleep" ? "bg-red-700" : "bg-red-500 hover:bg-red-700"
+              }`}
               onClick={() => setFilterMethod("bleep")}
             >
               bleep
@@ -163,13 +231,12 @@ function App() {
           </div>
         </div>
       </div>
+
       <div className="flex items-center justify-between">
         <h2>show comments section</h2>
-        <Switch
-          checked={showComments}
-          onCheckedChange={(value) => setShowComments(value)}
-        />
+        <Switch checked={showComments} onCheckedChange={(value) => setShowComments(value)} />
       </div>
+
       {/* Post a Comment Section */}
       <div className="flex flex-col gap-2">
         <h2>post a comment</h2>
@@ -189,6 +256,7 @@ function App() {
           post
         </button>
       </div>
+
       <div className="flex items-center">
         <button
           id="saveButton"
