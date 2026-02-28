@@ -2,6 +2,9 @@ from app.filters.timestamp import Timestamp, TimeRange
 from pydantic import BaseModel
 
 class SkipRange(BaseModel):
+    time_range: TimeRange  # Explicitly declare the time_range field
+    category: str          # Explicitly declare the category field
+
     def __init__(self, time_range: TimeRange, category: str):
         self.time_range = time_range
         self.category = category

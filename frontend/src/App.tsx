@@ -12,9 +12,10 @@ const FILTER_KEYS = [
 ] as const;
 
 type FilterKey = (typeof FILTER_KEYS)[number];
+type FilterMethod = "skip" | "mute" | "bleep";
 
 function App() {
-  const [filterMethod, setFilterMethod] = useState("");
+  const [filterMethod, setFilterMethod] = useState<FilterMethod>("skip");
   const [comment, setComment] = useState("");
   const [pgify, setPgify] = useState(false);
   const [showComments, setShowComments] = useState(false);
@@ -47,10 +48,12 @@ function App() {
         "enabledFilters",
       ],
       (data) => {
-        if (data.filterMethod) setFilterMethod(data.filterMethod);
+        if (data.filterMethod === "skip" || data.filterMethod === "mute" || data.filterMethod === "bleep") {
+          setFilterMethod(data.filterMethod);
+        }
+
         if (typeof data.pgifyActive === "boolean") setPgify(data.pgifyActive);
-        if (typeof data.showComments === "boolean")
-          setShowComments(data.showComments);
+        if (typeof data.showComments === "boolean") setShowComments(data.showComments);
         if (typeof data.displayName === "string") setDisplayName(data.displayName);
 
         if (Array.isArray(data.enabledFilters)) {
@@ -65,25 +68,31 @@ function App() {
     );
   }, []);
 
-  const handleSave = () => {
-    const enabledFilters = FILTER_KEYS.filter((key) => enabledFilterState[key]);
-
-    chrome.storage.local.set({
-      filterMethod: filterMethod,
-      pgifyActive: pgify,
-      showComments: showComments,
-      enabledFilters,
-    });
-
-    alert("Saved filter options");
-    window.close();
-  };
-
   const updateFilter = (key: FilterKey, checked: boolean) => {
     setEnabledFilterState((prev) => ({
       ...prev,
       [key]: checked,
     }));
+  };
+
+  const handleSave = () => {
+    const enabledFilters = FILTER_KEYS.filter((key) => enabledFilterState[key]);
+
+    chrome.storage.local.set(
+      {
+        filterMethod,
+        pgifyActive: pgify,
+        showComments,
+        enabledFilters,
+      },
+      () => {
+        // IMPORTANT: tell background to recompute skip ranges immediately
+        chrome.runtime.sendMessage({ type: "FLIXTRA_OPTIONS_UPDATED" });
+
+        alert("Saved filter options");
+        window.close();
+      },
+    );
   };
 
   const handlePost = () => {
@@ -108,6 +117,7 @@ function App() {
   return (
     <div className="flex w-96 flex-col gap-4 p-4 bg-background text-foreground">
       <h1 className="w-full text-center text-red-500">flixtra</h1>
+
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
           <h2>display name</h2>
@@ -121,6 +131,7 @@ function App() {
             </button>
           )}
         </div>
+
         {editingName ? (
           <div className="flex items-center gap-1">
             <input
@@ -148,11 +159,13 @@ function App() {
           </p>
         )}
       </div>
+
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
           <h2>pg-ify</h2>
           <Switch checked={pgify} onCheckedChange={(value) => setPgify(value)} />
         </div>
+
         <div className="flex items-center gap-2">
           <Checkbox
             checked={enabledFilterState.profanity}
@@ -160,24 +173,23 @@ function App() {
           />
           <p>profanity</p>
         </div>
+
         <div className="flex items-center gap-2">
           <Checkbox
             checked={enabledFilterState.sexual_content}
-            onCheckedChange={(value) =>
-              updateFilter("sexual_content", value === true)
-            }
+            onCheckedChange={(value) => updateFilter("sexual_content", value === true)}
           />
           <p>sexual content</p>
         </div>
+
         <div className="flex items-center gap-2">
           <Checkbox
             checked={enabledFilterState.substance_use}
-            onCheckedChange={(value) =>
-              updateFilter("substance_use", value === true)
-            }
+            onCheckedChange={(value) => updateFilter("substance_use", value === true)}
           />
           <p>substance use</p>
         </div>
+
         <div className="flex items-center gap-2">
           <Checkbox
             checked={enabledFilterState.violence}
@@ -185,26 +197,33 @@ function App() {
           />
           <p>violence and abuse</p>
         </div>
+
         <div className="flex flex-col gap-2">
           <h2>filter method</h2>
           <div className="flex gap-2">
             <button
               id="skipButton"
-              className={`filter-button ${filterMethod === "skip" ? "bg-red-700" : "bg-red-500 hover:bg-red-700"}`}
+              className={`filter-button ${
+                filterMethod === "skip" ? "bg-red-700" : "bg-red-500 hover:bg-red-700"
+              }`}
               onClick={() => setFilterMethod("skip")}
             >
               skip
             </button>
             <button
               id="muteButton"
-              className={`filter-button ${filterMethod === "mute" ? "bg-red-700" : "bg-red-500 hover:bg-red-700"}`}
+              className={`filter-button ${
+                filterMethod === "mute" ? "bg-red-700" : "bg-red-500 hover:bg-red-700"
+              }`}
               onClick={() => setFilterMethod("mute")}
             >
               mute
             </button>
             <button
-              id="muteButton"
-              className={`filter-button ${filterMethod === "bleep" ? "bg-red-700" : "bg-red-500 hover:bg-red-700"}`}
+              id="bleepButton"
+              className={`filter-button ${
+                filterMethod === "bleep" ? "bg-red-700" : "bg-red-500 hover:bg-red-700"
+              }`}
               onClick={() => setFilterMethod("bleep")}
             >
               bleep
@@ -212,13 +231,12 @@ function App() {
           </div>
         </div>
       </div>
+
       <div className="flex items-center justify-between">
         <h2>show comments section</h2>
-        <Switch
-          checked={showComments}
-          onCheckedChange={(value) => setShowComments(value)}
-        />
+        <Switch checked={showComments} onCheckedChange={(value) => setShowComments(value)} />
       </div>
+
       {/* Post a Comment Section */}
       <div className="flex flex-col gap-2">
         <h2>post a comment</h2>
@@ -238,6 +256,7 @@ function App() {
           post
         </button>
       </div>
+
       <div className="flex items-center">
         <button
           id="saveButton"

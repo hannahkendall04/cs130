@@ -133,12 +133,21 @@ async def analyze_subtitles_endpoint(request: AnalyzeSubtitlesRequest):
         
         # Optionally save to cache
         if request.save_cache and skip_ranges:
+            cache_ranges = [
+                SkipRange(
+                    start_ms=sr.time_range.start.ms,
+                    end_ms=sr.time_range.end.ms,
+                    category=sr.category,
+                )
+                for sr in skip_ranges
+            ]
+
             await db_utils.save_timestamps(
                 show_id=request.show_id,
                 filters=sorted(request.enabled_filters),
-                skip_ranges=skip_ranges
+                skip_ranges=cache_ranges,
             )
-        
+            
         # Convert SkipRange objects to JSON-serializable format
         response_ranges = [
             SkipRangeResponse(
