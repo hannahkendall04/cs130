@@ -7,10 +7,20 @@ function getNetflixTitle() {
   }
   return "Netflix_Subtitles";
 }
+function getNetflixShowId() {
+  const match = window.location.href.match(/netflix\.com\/watch\/(\d+)/);
+  return match ? match[1] : null;
+}
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "GET_TITLE") {
     sendResponse({ title: getNetflixTitle() });
+  }
+  if (message.type === "GET_VIDEO_INFO") {
+    sendResponse({
+      title: getNetflixTitle(),
+      showId: getNetflixShowId(),  // e.g. "81234567"
+    });
   }
   return true; 
 });

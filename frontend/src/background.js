@@ -154,12 +154,21 @@ function chromeTabsSendMessage(tabId, msg) {
   });
 }
 
-async function getVideoInfo(tabId) {
+/*async function getVideoInfo(tabId) {
   const resp = await chromeTabsSendMessage(tabId, { type: "GET_VIDEO_INFO" });
   return {
     title: resp?.title || "Netflix_Show",
     showId: resp?.showId || null,
   };
+}*/
+
+async function getVideoInfo(tabId) {
+  const tab = await chrome.tabs.get(tabId);
+  const match = tab.url?.match(/netflix\.com\/watch\/(\d+)/);
+  const showId = match ? match[1] : null;
+  const title = tab.title?.replace(" | Netflix", "").trim().replace(/[^a-z0-9]/gi, '_') || "Netflix_Show";
+  console.log("getVideoInfo:", { showId, title });
+  return { title, showId };
 }
 
 async function getEnabledFilters() {
@@ -172,8 +181,9 @@ async function getEnabledFilters() {
    Backend calls
 ------------------------------*/
 async function getCachedTimestamps(showId, enabledFilters) {
+  const sortedFilters = [...enabledFilters].sort();                   // ← add this
   const params = new URLSearchParams({ show_id: String(showId) });
-  enabledFilters.forEach((f) => params.append("filters", f));
+  sortedFilters.forEach((f) => params.append("filters", f)); // ← was enabledFilters
 
   try {
     const res = await fetch(`${API_BASE_URL}/get_timestamps?${params.toString()}`);

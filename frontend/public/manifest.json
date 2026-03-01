@@ -3,7 +3,7 @@
   "name": "Flixtra",
   "version": "1.0",
   "description": "A Chrome extension that provides extra features to Netflix.",
-  "permissions": ["activeTab", "storage", "webRequest", "downloads"],
+  "permissions": ["activeTab", "storage", "webRequest", "downloads", "tabs"],
   "host_permissions": [
     "https://*.netflix.com/*",
     "https://*.nflxvideo.net/*",
