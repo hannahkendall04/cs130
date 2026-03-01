@@ -9,6 +9,7 @@ from app.filters.categories import FilterCategory
 from typing import List, Optional
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
+from bson import ObjectId 
 
 class AnalyzeSubtitlesRequest(BaseModel):
     subtitle_content: str
@@ -94,6 +95,20 @@ async def post_timestamps(skip_ranges: List[SkipRange], filters: List[str], show
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+"""@app.get("/get_timestamps")
+async def get_timestamps(show_id: str, filters: List[str] = Query(...)):
+    print("=== get_timestamps called ===", show_id, filters)
+
+    try:
+        timestamps = await db_utils.get_cached_timestamps(show_id=show_id, filters=filters)
+        if timestamps is None:
+            raise HTTPException(status_code=404, detail="No cached timestamps found")
+        return timestamps
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))"""
+
 @app.get("/get_timestamps")
 async def get_timestamps(show_id: str, filters: List[str] = Query(...)):
     print("=== get_timestamps called ===", show_id, filters)
@@ -102,6 +117,18 @@ async def get_timestamps(show_id: str, filters: List[str] = Query(...)):
         timestamps = await db_utils.get_cached_timestamps(show_id=show_id, filters=filters)
         if timestamps is None:
             raise HTTPException(status_code=404, detail="No cached timestamps found")
+        
+        # Convert ObjectId fields to strings
+        def convert_objectid(obj):
+            if isinstance(obj, ObjectId):
+                return str(obj)
+            if isinstance(obj, dict):
+                return {key: convert_objectid(value) for key, value in obj.items()}
+            if isinstance(obj, list):
+                return [convert_objectid(item) for item in obj]
+            return obj
+
+        timestamps = convert_objectid(timestamps)
         return timestamps
     except HTTPException:
         raise
