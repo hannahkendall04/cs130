@@ -130,9 +130,12 @@ async function maybeComputeSkipRanges(tabId, showId, srtContent) {
 
   // Try cache first
   const cached = await getCachedTimestamps(showId, enabledFilters);
-  const skipRangesMs =
-    cached && cached.length > 0 ? cached : await analyzeSubtitles(srtContent, showId, enabledFilters);
+  //print("cached has length", cached.length);
 
+  //currently cache not working
+  /*const skipRangesMs =
+    cached && cached.length > 0 ? cached : await analyzeSubtitles(srtContent, showId, enabledFilters);*/
+  const skipRangesMs = await analyzeSubtitles(srtContent, showId, enabledFilters);
   const skipRanges = normalizeRanges(skipRangesMs);
   await chromeStorageSet({ skipRanges });
 
