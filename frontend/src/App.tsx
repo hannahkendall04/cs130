@@ -28,7 +28,8 @@ function App() {
         if (typeof data.pgifyActive === "boolean") setPgify(data.pgifyActive);
         if (typeof data.showComments === "boolean")
           setShowComments(data.showComments);
-        if (typeof data.displayName === "string") setDisplayName(data.displayName);
+        if (typeof data.displayName === "string")
+          setDisplayName(data.displayName);
       },
     );
   }, []);
@@ -73,18 +74,18 @@ function App() {
   };
 
   return (
-    <div className="flex w-96 flex-col gap-4 p-4 bg-background text-foreground">
-      <h1 className="w-full text-center text-red-500">flixtra</h1>
+    <div className="bg-background text-foreground flex w-96 flex-col gap-4 p-4">
+      <h1 className="text-primary w-full text-center">flixtra</h1>
       <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <h2>display name</h2>
           {!editingName && (
             <button
-              className="p-1"
+              className="text-primary hover:text-accent p-1 transition-all duration-300 ease-in-out hover:cursor-pointer"
               onClick={() => setEditingName(true)}
               aria-label="edit display name"
             >
-              <Edit size={16} color="white" />
+              <Edit size={16} />
             </button>
           )}
         </div>
@@ -92,7 +93,7 @@ function App() {
           <div className="flex items-center gap-1">
             <input
               ref={nameInputRef}
-              className="flex-1 rounded border border-gray-600 bg-input/30 px-2 py-1 text-sm text-foreground focus:ring-2 focus:ring-red-400 outline-none"
+              className="bg-input/30 focus:border-ring flex-1 rounded border px-2 py-1 text-sm outline-none"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               onKeyDown={(e) => {
@@ -101,16 +102,16 @@ function App() {
               onBlur={handleNameSubmit}
             />
             <button
-              className="p-1"
+              className="hover:text-accent text-primary p-1 transition-all duration-300 ease-in-out hover:cursor-pointer"
               onMouseDown={(e) => e.preventDefault()}
               onClick={handleNameSubmit}
               aria-label="save display name"
             >
-              <Check size={16} color="white" />
+              <Check size={16} />
             </button>
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             {displayName || "lorem ipsum"}
           </p>
         )}
@@ -136,31 +137,31 @@ function App() {
           <Checkbox />
           <p>violence and abuse</p>
         </div>
-        <div className="flex flex-col gap-2">
-          <h2>filter method</h2>
-          <div className="flex gap-2">
-            <button
-              id="skipButton"
-              className={`filter-button ${filterMethod === "skip" ? "bg-red-700" : "bg-red-500 hover:bg-red-700"}`}
-              onClick={() => setFilterMethod("skip")}
-            >
-              skip
-            </button>
-            <button
-              id="muteButton"
-              className={`filter-button ${filterMethod === "mute" ? "bg-red-700" : "bg-red-500 hover:bg-red-700"}`}
-              onClick={() => setFilterMethod("mute")}
-            >
-              mute
-            </button>
-            <button
-              id="muteButton"
-              className={`filter-button ${filterMethod === "bleep" ? "bg-red-700" : "bg-red-500 hover:bg-red-700"}`}
-              onClick={() => setFilterMethod("bleep")}
-            >
-              bleep
-            </button>
-          </div>
+      </div>
+      <div className="flex flex-col gap-2">
+        <h2>filter method</h2>
+        <div className="flex gap-2">
+          <button
+            id="skipButton"
+            className={`red-button w-1/3 ${filterMethod === "skip" && "bg-accent"}`}
+            onClick={() => setFilterMethod("skip")}
+          >
+            skip
+          </button>
+          <button
+            id="muteButton"
+            className={`red-button w-1/3 ${filterMethod === "mute" && "bg-accent"}`}
+            onClick={() => setFilterMethod("mute")}
+          >
+            mute
+          </button>
+          <button
+            id="muteButton"
+            className={`red-button w-1/3 ${filterMethod === "bleep" && "bg-accent"}`}
+            onClick={() => setFilterMethod("bleep")}
+          >
+            bleep
+          </button>
         </div>
       </div>
       <div className="flex items-center justify-between">
@@ -170,29 +171,10 @@ function App() {
           onCheckedChange={(value) => setShowComments(value)}
         />
       </div>
-      {/* Post a Comment Section
-      <div className="flex flex-col gap-2">
-        <h2>post a comment</h2>
-        <textarea
-          className="w-full resize-none rounded border border-gray-600 p-2 text-sm text-foreground focus:ring-2 focus:ring-red-400 focus:outline-none"
-          rows={3}
-          placeholder="Write a comment..."
-          value={comment}
-          onChange={(e) => setComment(e.target.value)}
-        />
-        <button
-          id="postButton"
-          className="w-full rounded bg-red-500 px-4 py-2 text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
-          onClick={handlePost}
-          disabled={!comment.trim()}
-        >
-          post
-        </button>
-      </div> */}
-      <div className="flex items-center">
+      <div className="mt-4 flex items-center">
         <button
           id="saveButton"
-          className="w-full cursor-pointer rounded bg-red-500 px-4 py-2 text-sm text-white hover:bg-red-700"
+          className="red-button w-full"
           onClick={handleSave}
         >
           save

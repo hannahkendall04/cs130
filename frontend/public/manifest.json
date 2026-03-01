@@ -37,7 +37,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["iframe.html", "iframe.js"],
+      "resources": ["iframe.html", "iframe.js", "main.css"],
       "matches": ["https://www.netflix.com/*"]
     }
   ],

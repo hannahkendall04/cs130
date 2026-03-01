@@ -173,7 +173,7 @@ function wrapNetflixPage() {
   iframe.style.height = "100vh";
   iframe.style.border = "none";
   iframe.style.zIndex = "999999";
-  iframe.style.backgroundColor = "white";
+  iframe.style.backgroundColor = "#141414";
 
   document.body.appendChild(iframe);
 

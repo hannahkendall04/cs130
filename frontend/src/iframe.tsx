@@ -50,63 +50,21 @@ function App() {
       {/* DRAG HANDLE */}
       <div
         onMouseDown={() => setDragging(true)}
-        style={{
-          position: "absolute",
-          left: 0,
-          top: 0,
-          width: "3px",
-          height: "100%",
-          cursor: "ew-resize",
-          background: "#333",
-        }}
+        className="absolute top-0 left-0 h-full w-1 cursor-ew-resize bg-[#333]"
       />
       {/* COMMENT SECTION */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateRows: "auto 1fr auto",
-          gap: 10,
-          padding: 16,
-          userSelect: "none",
-          height: "100vh",
-          boxSizing: "border-box",
-        }}
-      >
-        <h1>comments</h1>
+      <div className="bg-background box-border grid h-screen grid-rows-[auto_1fr_auto] gap-2.5 p-4 text-white select-none">
+        <h1 className="text-center">comments</h1>
         <h1>actual comments</h1>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            width: "100%",
-          }}
-        >
+        <div className="flex w-full items-center gap-3">
           <textarea
-            placeholder="Write a comment..."
-            style={{
-              resize: "none",
-              backgroundColor: "#1E1E1E",
-              color: "#E5E5E5",
-              border: "none",
-              borderRadius: 5,
-              padding: 12,
-              width: "100%",
-            }}
+            placeholder="write a comment..."
             value={comment}
             onChange={(e) => setComment(e.target.value)}
+            className="bg-card text-foreground focus:border-ring border-muted w-full resize-none rounded border p-3 outline-none"
           />
-          <div
-            style={{
-              borderRadius: "9999px",
-              background: "#E50914",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: 4,
-            }}
-          >
-            <ArrowUp onClick={handlePost} color="white" size={20} />
+          <div className="bg-primary hover:bg-accent flex items-center justify-between rounded-full p-1 text-white transition-all duration-300 ease-in-out hover:cursor-pointer">
+            <ArrowUp onClick={handlePost} size={20} />
           </div>
         </div>
       </div>

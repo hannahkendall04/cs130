@@ -45,6 +45,12 @@ export default defineConfig({
           if (chunkInfo.name === "iframe") return "iframe.js";
           return "[name]-[hash].js"; // optional for popup etc.
         },
+        assetFileNames: (assetInfo) => {
+          if (assetInfo.name && assetInfo.name.endsWith(".css")) {
+            return "main.css";
+          }
+          return "assets/[name]-[hash][extname]";
+        },
       },
     },
   },

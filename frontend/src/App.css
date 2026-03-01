@@ -22,8 +22,8 @@
   }
 }
 
-.filter-button {
-  @apply w-1/3 cursor-pointer rounded py-1 text-sm text-white;
+.red-button {
+  @apply bg-primary hover:bg-accent cursor-pointer rounded py-2 text-sm font-medium text-white transition-all duration-300 ease-in-out;
 }
 
 @theme inline {
@@ -107,120 +107,54 @@
 :root {
   --radius: 0.625rem;
 
-  /* Netflix-inspired palette */
-  --background: #141414;             /* dark canvas */
+  --background: #141414; /* dark canvas */
 
-  --foreground: #E5E5E5;             /* off-white text */
+  --foreground: #e5e5e5; /* off-white text */
 
-  --card: #1E1E1E;                   /* slightly lighter container */
+  --card: #1e1e1e; /* slightly lighter container */
 
-  --card-foreground: #FFFFFF;        /* white text on cards */
+  --card-foreground: #ffffff; /* white text on cards */
 
-  --popover: #1E1E1E;                /* popover same as card */
+  --popover: #1e1e1e; /* popover same as card */
 
-  --popover-foreground: #FFFFFF;
+  --popover-foreground: #ffffff;
 
-  --primary: #E50914;                /* Netflix red */
+  --primary: #e50914; /* Netflix red */
 
-  --primary-foreground: #FFFFFF;
+  --primary-foreground: #ffffff;
 
-  --secondary: #E5E5E5;              /* light neutral */
+  --secondary: #e5e5e5; /* light neutral */
 
   --secondary-foreground: #141414;
 
-  --muted: #444444;                  /* muted grey */
+  --muted: #444444; /* muted grey */
 
-  --muted-foreground: #CCCCCC;
+  --muted-foreground: #cccccc;
 
-  --accent: #E50914;                 /* reuse red for accent */
+  --accent: #c10007; /* darker red */
 
-  --accent-foreground: #FFFFFF;
+  --accent-foreground: #ffffff;
 
   --destructive: oklch(0.577 0.245 27.325);
 
-  --border: #333333;                /* subtle boundaries */
+  --border: #333333; /* subtle boundaries */
 
-  --input: #333333;                 /* dark input backgrounds */
+  --input: #333333; /* dark input backgrounds */
 
-  --ring: #E50914;                  /* red focus rings */
+  --ring: #e50914; /* red focus rings */
 
-  --chart-1: #E50914;
-  --chart-2: #B81D24;
-  --chart-3: #221F1F;
+  --chart-1: #e50914;
+  --chart-2: #b81d24;
+  --chart-3: #221f1f;
   --chart-4: #333333;
   --chart-5: #444444;
 
   --sidebar: #141414;
-  --sidebar-foreground: #E5E5E5;
-  --sidebar-primary: #E50914;
-  --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #E50914;
-  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-foreground: #e5e5e5;
+  --sidebar-primary: #e50914;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e50914;
+  --sidebar-accent-foreground: #ffffff;
   --sidebar-border: #333333;
-  --sidebar-ring: #E50914;
-}
-
-.dark {
-  /* dark variant stays consistent with Netflix dark theme */
-  --background: #141414;
-
-  --foreground: #FFFFFF;
-
-  --card: #1E1E1E;
-
-  --card-foreground: #FFFFFF;
-
-  --popover: #1E1E1E;
-
-  --popover-foreground: #FFFFFF;
-
-  --primary: #E50914;
-
-  --primary-foreground: #FFFFFF;
-
-  --secondary: #E5E5E5;
-
-  --secondary-foreground: #141414;
-
-  --muted: #444444;
-
-  --muted-foreground: #CCCCCC;
-
-  --accent: #E50914;
-
-  --accent-foreground: #FFFFFF;
-
-  --destructive: #FF0000;
-
-  --border: rgba(255,255,255,0.1);
-
-  --input: rgba(255,255,255,0.15);
-
-  --ring: #E50914;
-
-  --chart-1: #E50914;
-
-  --chart-2: #B81D24;
-
-  --chart-3: #221F1F;
-
-  --chart-4: #333333;
-
-  --chart-5: #444444;
-
-  --sidebar: #141414;
-
-  --sidebar-foreground: #FFFFFF;
-
-  --sidebar-primary: #E50914;
-
-  --sidebar-primary-foreground: #FFFFFF;
-
-  --sidebar-accent: #E50914;
-
-  --sidebar-accent-foreground: #FFFFFF;
-
-  --sidebar-border: rgba(255,255,255,0.1);
-
-  --sidebar-ring: #E50914;
+  --sidebar-ring: #e50914;
 }
