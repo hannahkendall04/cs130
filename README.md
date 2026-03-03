@@ -100,7 +100,7 @@ To start the backend development server (make sure your virtual environment is a
 
 ```sh
 cd backend
-fastapi dev app.py
+uvicorn main:app --reload
 ```
 
 This will start the Vite development server and open your default browser.
