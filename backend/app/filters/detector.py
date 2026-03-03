@@ -1,8 +1,13 @@
 from __future__ import annotations
 
+import os
+import json
 import re
 from dataclasses import dataclass
 from typing import Iterable, List, Optional, Set
+
+from dotenv import load_dotenv
+import google.generativeai as genai
 
 from app.filters.timestamp import Timestamp, TimeRange
 from app.filters.skip_range import SkipRange
@@ -11,6 +16,15 @@ from app.filters.categories import (
     DEFAULT_KEYWORDS,
     DEFAULT_MERGE_GAP_MS,
 )
+from app.filters.prompts import get_content_analysis_prompt
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Configure Gemini API
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
 
 
 
@@ -97,21 +111,46 @@ def analyze_subtitles(
     multi_label: bool = False,
 ) -> list[SkipRange]:
     """
-    Basic analyzer:
-    - scans each subtitle block text against DEFAULT_KEYWORDS
-    - returns SkipRanges (merged)
+    Gemini-powered analyzer:
+    - Uses Gemini to analyze subtitle text for content safety
+    - Returns SkipRanges (merged) for flagged content
     - If multi_label=False: each block maps to the first matched category.
       If multi_label=True: a block can produce multiple SkipRanges (one per matched category).
     """
     enabled = enabled_categories or set(DEFAULT_KEYWORDS.keys())
-
-    patterns_by_cat = {
-        cat: _compile_patterns(DEFAULT_KEYWORDS.get(cat, []))
-        for cat in enabled
-    }
-
     hits: list[SkipRange] = []
 
+    # Check if API key is configured
+    if not GEMINI_API_KEY:
+        # Fall back to keyword matching if API key not available
+        patterns_by_cat = {
+            cat: _compile_patterns(DEFAULT_KEYWORDS.get(cat, []))
+            for cat in enabled
+        }
+        
+        for b in subtitle_blocks:
+            text = (b.text or "").strip()
+            if not text:
+                continue
+            if b.end_ms <= b.start_ms:
+                continue
+
+            matched_any = False
+            for cat, patterns in patterns_by_cat.items():
+                if not patterns:
+                    continue
+                if any(p.search(text) for p in patterns):
+                    hits.append(SkipRange.from_ms(b.start_ms, b.end_ms, cat.value))
+                    matched_any = True
+                    if not multi_label:
+                        break
+        
+        return _merge_skip_ranges(hits, gap_ms=merge_gap_ms)
+
+    # Use Gemini for analysis
+    model = genai.GenerativeModel("gemini-2.5-flash")
+    enabled_cat_names = [cat.value for cat in enabled]
+    
     for b in subtitle_blocks:
         text = (b.text or "").strip()
         if not text:
@@ -119,16 +158,40 @@ def analyze_subtitles(
         if b.end_ms <= b.start_ms:
             continue
 
-        matched_any = False
-        for cat, patterns in patterns_by_cat.items():
-            if not patterns:
-                continue
-            if any(p.search(text) for p in patterns):
-                hits.append(SkipRange.from_ms(b.start_ms, b.end_ms, cat.value))
-                matched_any = True
-                if not multi_label:
-                    break
+        try:
+            prompt = get_content_analysis_prompt(text, enabled_cat_names)
+            response = model.generate_content(prompt)
+            response_text = response.text.strip()
+            
+            # Extract JSON from response
+            try:
+                # Try to find JSON in the response
+                json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+                if json_match:
+                    result = json.loads(json_match.group())
+                    categories = result.get("categories", [])
+                else:
+                    categories = []
+            except (json.JSONDecodeError, AttributeError):
+                categories = []
 
-        # (Optional) could track unmatched blocks here if you want debug stats
+            # Create skip ranges for matched categories
+            matched_any = False
+            for cat_name in categories:
+                try:
+                    cat = FilterCategory(cat_name)
+                    if cat in enabled:
+                        hits.append(SkipRange.from_ms(b.start_ms, b.end_ms, cat.value))
+                        matched_any = True
+                        if not multi_label:
+                            break
+                except ValueError:
+                    # Category name not recognized
+                    continue
+
+        except Exception as e:
+            # If Gemini API fails, log and skip this block
+            print(f"Gemini API error analyzing subtitle: {e}")
+            continue
 
     return _merge_skip_ranges(hits, gap_ms=merge_gap_ms)
