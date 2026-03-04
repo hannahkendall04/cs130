@@ -27,6 +27,7 @@ build
 
 # Python files
 .venv
+venv/
 __pycache__/
 *.py[cod]
 *.env

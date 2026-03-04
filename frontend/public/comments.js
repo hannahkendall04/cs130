@@ -5,6 +5,8 @@ let user = null;
 let showId = null;
 let commentStartTime = null;
 let showComments = false;
+let allComments = [];
+let commentInterval = null;
 
 // load time
 chrome.storage.local.get(["commentData", "showComments"], (data) => {
@@ -98,6 +100,7 @@ async function postComment() {
 
       const result = await response.json();
       console.log(`Successfully posted comment: ${result}`);
+      await getComments();
     } catch (error) {
       console.error(`Error posting comment: ${error}`);
     }
@@ -160,10 +163,23 @@ async function getComments() {
 
       const result = await response.json();
       console.log(`Successfully grabbed comments! ${result}`);
+      allComments = result.comments;
+      if (!commentInterval) {
+        commentInterval = setInterval(sendVisibleComments, 1000);
+      }
     } catch (error) {
       console.error(`Error getting comments: ${error}`);
     }
   }
+}
+
+function sendVisibleComments() {
+  const video = document.querySelector("video");
+  const iframe = document.getElementById("flixtra-iframe");
+  if (!video || !iframe?.contentWindow) return;
+  const currentTime = video.currentTime;
+  const visible = allComments.filter(c => parseFloat(c.startTime) <= currentTime);
+  iframe.contentWindow.postMessage({ type: "FLIXTRA_COMMENTS", comments: visible }, "*");
 }
 
 function wrapNetflixPage() {
@@ -204,6 +220,9 @@ function wrapNetflixPage() {
 
 function unwrapNetflixPage() {
   console.log("unwrapping netflix page");
+  clearInterval(commentInterval);
+  commentInterval = null;
+  allComments = [];
   // Remove the iframe
   const iframe = document.getElementById("flixtra-iframe");
   if (iframe) {
