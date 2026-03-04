@@ -9,9 +9,10 @@ let allComments = [];
 let commentInterval = null;
 
 // load time
-chrome.storage.local.get(["commentData", "showComments"], (data) => {
+chrome.storage.local.get(["commentData", "showComments", "displayName"], (data) => {
   comment = data.commentData?.comment;
   showComments = data.showComments;
+  user = data.displayName || "anonymous";
 });
 
 chrome.storage.local.get(["showComments"], (data) => {
@@ -33,7 +34,6 @@ chrome.storage.onChanged.addListener(async (changes) => {
     const video = document.querySelector("video");
     if (video) {
       comment = changes.commentData.newValue?.comment;
-      user = "test_user"; // test user for now
       showId = getNetflixTrackId();
       commentStartTime = video.currentTime;
 
@@ -49,6 +49,10 @@ chrome.storage.onChanged.addListener(async (changes) => {
         }
       });
     }
+  }
+
+  if (changes.displayName) {
+    user = changes.displayName.newValue || "anonymous";
   }
 
   if (changes.showComments) {
