@@ -22,6 +22,9 @@ class SkipRangeResponse(BaseModel):
     end_ms: int
     category: str
 
+class GetCommentsShowId(BaseModel):
+    show_id: str
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -71,10 +74,13 @@ async def post_comment(comment: Comment):
 
 
 @app.post("/get_comments")
-async def get_comments(show_id: Optional[str] = None):
+async def get_comments(getComments: GetCommentsShowId):
+    show_id = getComments.show_id
+    print("getting comments...")
+    print(f"show id: {show_id}")
     try:
         collection = db_utils.db["comments"]
-        query = {} if show_id is None else {"showId": int(show_id)}
+        query = {} if show_id is None else {"showId": show_id}
         comments = await collection.find(query).to_list(length=100)
         
         # Convert ObjectId to string for JSON serialization

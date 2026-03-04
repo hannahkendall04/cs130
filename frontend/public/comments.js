@@ -126,6 +126,15 @@ function getNetflixTrackId() {
 async function getComments() {
   // only run if showComments is true
   if (showComments) {
+    if (!showId) {
+      console.log("grabbing show id...");
+      showId = getNetflixTrackId();
+    }
+
+    console.log(`Show ID: ${showId}`); // non null
+
+    console.log(`Show ID Type: ${typeof(showId)}`); // string
+
     let getData = {
       show_id: showId,
     };
@@ -135,8 +144,8 @@ async function getComments() {
     try {
       const response = await fetch(get_comments_url, {
         method: "POST",
-        header: {
-          Accept: "application/json",
+        headers: {
+          'Accept': "application/json",
           "Content-Type": "application/json",
         },
         body: JSON.stringify(getData),
