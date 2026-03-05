@@ -9,18 +9,20 @@ let allComments = [];
 let commentInterval = null;
 let currentShowId = null;
 let commentsSyncInterval = null;
-let resizeMessageHandler = null;
 const LAYOUT_STYLE_ID = "flixtra-layout-style";
 const SIDEBAR_WIDTH_VAR = "--flixtra-sidebar-width";
 const DEFAULT_SIDEBAR_WIDTH = 400;
 
 // load time
-chrome.storage.local.get(["commentData", "showComments", "displayName"], (data) => {
-  comment = data.commentData?.comment;
-  showComments = data.showComments;
-  user = data.displayName || "anonymous";
-  syncCommentsVisibility();
-});
+chrome.storage.local.get(
+  ["commentData", "showComments", "displayName"],
+  (data) => {
+    comment = data.commentData?.comment;
+    showComments = data.showComments;
+    user = data.displayName || "anonymous";
+    syncCommentsVisibility();
+  },
+);
 
 startCommentsSync();
 
@@ -67,7 +69,9 @@ chrome.runtime.onMessage.addListener((message) => {
 });
 
 function isNetflixWatchPage() {
-  return /^https?:\/\/(www\.)?netflix\.com\/watch\/\d+/.test(window.location.href);
+  return /^https?:\/\/(www\.)?netflix\.com\/watch\/\d+/.test(
+    window.location.href,
+  );
 }
 
 function shouldShowCommentsPanel() {
@@ -189,7 +193,7 @@ async function getComments() {
 
     console.log(`Show ID: ${showId}`); // non null
 
-    console.log(`Show ID Type: ${typeof(showId)}`); // string
+    console.log(`Show ID Type: ${typeof showId}`); // string
 
     let getData = {
       show_id: showId,
@@ -201,7 +205,7 @@ async function getComments() {
       const response = await fetch(get_comments_url, {
         method: "POST",
         headers: {
-          'Accept': "application/json",
+          Accept: "application/json",
           "Content-Type": "application/json",
         },
         body: JSON.stringify(getData),
@@ -231,8 +235,13 @@ function sendVisibleComments() {
   const iframe = document.getElementById("flixtra-iframe");
   if (!video || !iframe?.contentWindow) return;
   const currentTime = video.currentTime;
-  const visible = allComments.filter(c => parseFloat(c.startTime) <= currentTime);
-  iframe.contentWindow.postMessage({ type: "FLIXTRA_COMMENTS", comments: visible }, "*");
+  const visible = allComments.filter(
+    (c) => parseFloat(c.startTime) <= currentTime,
+  );
+  iframe.contentWindow.postMessage(
+    { type: "FLIXTRA_COMMENTS", comments: visible },
+    "*",
+  );
 }
 
 function wrapNetflixPage() {
@@ -254,19 +263,6 @@ function wrapNetflixPage() {
   document.body.appendChild(iframe);
   ensureLayoutStyles();
   applyNetflixLayoutOffset(DEFAULT_SIDEBAR_WIDTH);
-
-  // Listen for resize messages from iframe
-  resizeMessageHandler = (event) => {
-    if (event.data?.type !== "FLIXTRA_RESIZE") return;
-
-    const newWidth = Number(event.data.width);
-    if (!Number.isFinite(newWidth)) return;
-
-    iframe.style.width = newWidth + "px";
-    applyNetflixLayoutOffset(newWidth);
-  };
-
-  window.addEventListener("message", resizeMessageHandler);
 }
 
 function getCurrentSidebarWidth() {
@@ -317,7 +313,8 @@ function applyNetflixLayoutOffset(width) {
   if (appMountPoint) {
     appMountPoint.style.marginRight = widthPx;
     appMountPoint.style.width = `calc(100% - ${width}px)`;
-    appMountPoint.style.transition = "margin-right 0.15s ease, width 0.15s ease";
+    appMountPoint.style.transition =
+      "margin-right 0.15s ease, width 0.15s ease";
   }
 
   const playerView = document.querySelector(".watch-video--player-view");
@@ -349,7 +346,6 @@ function clearNetflixLayoutOffset() {
 }
 
 function unwrapNetflixPage() {
-  console.log("unwrapping netflix page");
   clearInterval(commentInterval);
   commentInterval = null;
   allComments = [];
@@ -359,13 +355,6 @@ function unwrapNetflixPage() {
     iframe.remove();
   }
 
-  if (resizeMessageHandler) {
-    window.removeEventListener("message", resizeMessageHandler);
-    resizeMessageHandler = null;
-  }
-
   // Reset Netflix page margin
   clearNetflixLayoutOffset();
-
-  console.log("Flixtra iframe removed, Netflix page restored.");
 }

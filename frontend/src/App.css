@@ -107,54 +107,65 @@
 :root {
   --radius: 0.625rem;
 
-  --background: #141414; /* dark canvas */
+  --background: #141414;
 
-  --foreground: #e5e5e5; /* off-white text */
+  --foreground: #e5e5e5;
 
-  --card: #1e1e1e; /* slightly lighter container */
+  --card: #1e1e1e;
 
-  --card-foreground: #ffffff; /* white text on cards */
+  --card-foreground: #ffffff;
 
-  --popover: #1e1e1e; /* popover same as card */
+  --popover: #1e1e1e;
 
   --popover-foreground: #ffffff;
 
-  --primary: #e50914; /* Netflix red */
+  --primary: #e50914;
 
   --primary-foreground: #ffffff;
 
-  --secondary: #e5e5e5; /* light neutral */
+  --secondary: #e5e5e5;
 
   --secondary-foreground: #141414;
 
-  --muted: #444444; /* muted grey */
+  --muted: #444444;
 
   --muted-foreground: #cccccc;
 
-  --accent: #c10007; /* darker red */
+  --accent: #c10007;
 
   --accent-foreground: #ffffff;
 
   --destructive: oklch(0.577 0.245 27.325);
 
-  --border: #333333; /* subtle boundaries */
+  --border: #333333;
 
-  --input: #333333; /* dark input backgrounds */
+  --input: #333333;
 
-  --ring: #e50914; /* red focus rings */
+  --ring: #e50914;
 
   --chart-1: #e50914;
+
   --chart-2: #b81d24;
+
   --chart-3: #221f1f;
+
   --chart-4: #333333;
+
   --chart-5: #444444;
 
   --sidebar: #141414;
+
   --sidebar-foreground: #e5e5e5;
+
   --sidebar-primary: #e50914;
+
   --sidebar-primary-foreground: #ffffff;
+
   --sidebar-accent: #e50914;
+
   --sidebar-accent-foreground: #ffffff;
+
   --sidebar-border: #333333;
+
   --sidebar-ring: #e50914;
 }
