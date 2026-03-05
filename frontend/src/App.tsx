@@ -18,6 +18,7 @@ function App() {
   const [filterMethod, setFilterMethod] = useState<FilterMethod>("skip");
   const [pgify, setPgify] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [isWatchPage, setIsWatchPage] = useState(false);
   const [preferencesLocked, setPreferencesLocked] = useState(false);
   const [showLockedMessage, setShowLockedMessage] = useState(false);
   const lockMessageTimeoutRef = useRef<number | null>(null);
@@ -82,6 +83,7 @@ function App() {
       const watchingEpisode = /^https?:\/\/(www\.)?netflix\.com\/watch\/\d+/.test(
         activeTabUrl,
       );
+      setIsWatchPage(watchingEpisode);
       setPreferencesLocked(watchingEpisode);
     });
   }, []);
@@ -136,6 +138,16 @@ function App() {
       () => {
         // IMPORTANT: tell background to recompute skip ranges immediately
         chrome.runtime.sendMessage({ type: "FLIXTRA_OPTIONS_UPDATED" });
+
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          const activeTabId = tabs?.[0]?.id;
+          if (typeof activeTabId === "number") {
+            chrome.tabs.sendMessage(activeTabId, {
+              type: "FLIXTRA_SET_SHOW_COMMENTS",
+              showComments,
+            });
+          }
+        });
 
         alert("Saved filter options");
         window.close();
@@ -309,13 +321,15 @@ function App() {
           </button>
         </div>
       </div>
-      <div className="flex items-center justify-between">
-        <h2>show comments section</h2>
-        <Switch
-          checked={showComments}
-          onCheckedChange={(value) => setShowComments(value)}
-        />
-      </div>
+      {isWatchPage && (
+        <div className="flex items-center justify-between">
+          <h2>show comments section</h2>
+          <Switch
+            checked={showComments}
+            onCheckedChange={(value) => setShowComments(value)}
+          />
+        </div>
+      )}
       <div className="mt-4 flex items-center">
         <button
           id="saveButton"

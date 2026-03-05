@@ -7,26 +7,22 @@ let commentStartTime = null;
 let showComments = false;
 let allComments = [];
 let commentInterval = null;
+let currentShowId = null;
+let commentsSyncInterval = null;
+let resizeMessageHandler = null;
+const LAYOUT_STYLE_ID = "flixtra-layout-style";
+const SIDEBAR_WIDTH_VAR = "--flixtra-sidebar-width";
+const DEFAULT_SIDEBAR_WIDTH = 400;
 
 // load time
 chrome.storage.local.get(["commentData", "showComments", "displayName"], (data) => {
   comment = data.commentData?.comment;
   showComments = data.showComments;
   user = data.displayName || "anonymous";
+  syncCommentsVisibility();
 });
 
-chrome.storage.local.get(["showComments"], (data) => {
-  if (data.showComments) {
-    console.log("showing comments 1");
-    showComments = true;
-    wrapNetflixPage();
-    showId = getNetflixTrackId();
-    getComments();
-  } else {
-    console.log("not showing comments 1");
-    unwrapNetflixPage();
-  }
-});
+startCommentsSync();
 
 // check for changes
 chrome.storage.onChanged.addListener(async (changes) => {
@@ -57,18 +53,71 @@ chrome.storage.onChanged.addListener(async (changes) => {
 
   if (changes.showComments) {
     showComments = changes.showComments.newValue;
-    showId = getNetflixTrackId();
-
-    if (showComments) {
-      console.log("showing comments 2");
-      wrapNetflixPage();
-      await getComments();
-    } else {
-      console.log("not showing comments 2");
-      unwrapNetflixPage();
-    }
+    currentShowId = null;
+    await syncCommentsVisibility();
   }
 });
+
+chrome.runtime.onMessage.addListener((message) => {
+  if (message?.type !== "FLIXTRA_SET_SHOW_COMMENTS") return;
+
+  showComments = message.showComments === true;
+  currentShowId = null;
+  syncCommentsVisibility();
+});
+
+function isNetflixWatchPage() {
+  return /^https?:\/\/(www\.)?netflix\.com\/watch\/\d+/.test(window.location.href);
+}
+
+function shouldShowCommentsPanel() {
+  return showComments === true && isNetflixWatchPage();
+}
+
+async function syncCommentsVisibility() {
+  if (!shouldShowCommentsPanel()) {
+    unwrapNetflixPage();
+    currentShowId = null;
+    return;
+  }
+
+  wrapNetflixPage();
+  applyNetflixLayoutOffset(getCurrentSidebarWidth());
+  attachPlaybackLifecycle();
+
+  const latestShowId = getNetflixTrackId();
+  if (!latestShowId) return;
+
+  if (latestShowId !== currentShowId) {
+    showId = latestShowId;
+    currentShowId = latestShowId;
+    await getComments();
+  }
+}
+
+function startCommentsSync() {
+  if (commentsSyncInterval) return;
+
+  commentsSyncInterval = setInterval(() => {
+    syncCommentsVisibility();
+  }, 1000);
+}
+
+function attachPlaybackLifecycle() {
+  const video = document.querySelector("video");
+  if (!video || video.dataset.flixtraCommentsAttached === "true") return;
+
+  video.dataset.flixtraCommentsAttached = "true";
+  video.addEventListener("ended", handlePlaybackEnded);
+}
+
+function handlePlaybackEnded() {
+  if (!showComments) return;
+
+  chrome.storage.local.set({ showComments: false }, () => {
+    unwrapNetflixPage();
+  });
+}
 
 // frontend connection to post comments fastapi functionality
 async function postComment() {
@@ -132,7 +181,7 @@ function getNetflixTrackId() {
 // frontend connection to get comments fastapi functionality
 async function getComments() {
   // only run if showComments is true
-  if (showComments) {
+  if (shouldShowCommentsPanel()) {
     if (!showId) {
       console.log("grabbing show id...");
       showId = getNetflixTrackId();
@@ -189,8 +238,6 @@ function sendVisibleComments() {
 function wrapNetflixPage() {
   if (document.getElementById("flixtra-iframe")) return;
 
-  const DEFAULT_WIDTH = 400;
-
   const iframe = document.createElement("iframe");
   iframe.id = "flixtra-iframe";
   iframe.src = chrome.runtime.getURL("iframe.html");
@@ -198,28 +245,107 @@ function wrapNetflixPage() {
   iframe.style.position = "fixed";
   iframe.style.top = "0";
   iframe.style.right = "0";
-  iframe.style.width = DEFAULT_WIDTH + "px";
+  iframe.style.width = DEFAULT_SIDEBAR_WIDTH + "px";
   iframe.style.height = "100vh";
   iframe.style.border = "none";
   iframe.style.zIndex = "999999";
   iframe.style.backgroundColor = "#141414";
 
   document.body.appendChild(iframe);
-
-  // Push Netflix content left
-  document.body.style.marginRight = DEFAULT_WIDTH + "px";
+  ensureLayoutStyles();
+  applyNetflixLayoutOffset(DEFAULT_SIDEBAR_WIDTH);
 
   // Listen for resize messages from iframe
-  window.addEventListener("message", (event) => {
-    if (event.data?.type === "FLIXTRA_RESIZE") {
-      const newWidth = event.data.width;
+  resizeMessageHandler = (event) => {
+    if (event.data?.type !== "FLIXTRA_RESIZE") return;
 
-      iframe.style.width = newWidth + "px";
-      document.body.style.marginRight = newWidth + "px";
+    const newWidth = Number(event.data.width);
+    if (!Number.isFinite(newWidth)) return;
+
+    iframe.style.width = newWidth + "px";
+    applyNetflixLayoutOffset(newWidth);
+  };
+
+  window.addEventListener("message", resizeMessageHandler);
+}
+
+function getCurrentSidebarWidth() {
+  const iframe = document.getElementById("flixtra-iframe");
+  const width = Number.parseInt(iframe?.style.width || "", 10);
+  return Number.isFinite(width) && width > 0 ? width : DEFAULT_SIDEBAR_WIDTH;
+}
+
+function ensureLayoutStyles() {
+  if (document.getElementById(LAYOUT_STYLE_ID)) return;
+
+  const style = document.createElement("style");
+  style.id = LAYOUT_STYLE_ID;
+  style.textContent = `
+    body.flixtra-comments-open {
+      margin-right: var(${SIDEBAR_WIDTH_VAR}) !important;
+      transition: margin-right 0.15s ease;
     }
-  });
 
+    body.flixtra-comments-open #appMountPoint {
+      margin-right: var(${SIDEBAR_WIDTH_VAR}) !important;
+      width: calc(100% - var(${SIDEBAR_WIDTH_VAR})) !important;
+      transition: margin-right 0.15s ease, width 0.15s ease;
+    }
+
+    body.flixtra-comments-open .watch-video,
+    body.flixtra-comments-open .watch-video--player-view,
+    body.flixtra-comments-open .watch-video--player-view-container {
+      right: var(${SIDEBAR_WIDTH_VAR}) !important;
+      transition: right 0.15s ease;
+    }
+  `;
+
+  document.head.appendChild(style);
+}
+
+function applyNetflixLayoutOffset(width) {
+  const widthPx = `${width}px`;
+  ensureLayoutStyles();
+
+  document.body.classList.add("flixtra-comments-open");
+  document.body.style.setProperty(SIDEBAR_WIDTH_VAR, widthPx);
+
+  document.body.style.marginRight = widthPx;
   document.body.style.transition = "margin-right 0.15s ease";
+
+  const appMountPoint = document.getElementById("appMountPoint");
+  if (appMountPoint) {
+    appMountPoint.style.marginRight = widthPx;
+    appMountPoint.style.width = `calc(100% - ${width}px)`;
+    appMountPoint.style.transition = "margin-right 0.15s ease, width 0.15s ease";
+  }
+
+  const playerView = document.querySelector(".watch-video--player-view");
+  if (playerView instanceof HTMLElement) {
+    playerView.style.right = widthPx;
+    playerView.style.transition = "right 0.15s ease";
+  }
+}
+
+function clearNetflixLayoutOffset() {
+  document.body.classList.remove("flixtra-comments-open");
+  document.body.style.removeProperty(SIDEBAR_WIDTH_VAR);
+
+  document.body.style.marginRight = "0";
+  document.body.style.transition = "";
+
+  const appMountPoint = document.getElementById("appMountPoint");
+  if (appMountPoint) {
+    appMountPoint.style.marginRight = "";
+    appMountPoint.style.width = "";
+    appMountPoint.style.transition = "";
+  }
+
+  const playerView = document.querySelector(".watch-video--player-view");
+  if (playerView instanceof HTMLElement) {
+    playerView.style.right = "";
+    playerView.style.transition = "";
+  }
 }
 
 function unwrapNetflixPage() {
@@ -233,8 +359,13 @@ function unwrapNetflixPage() {
     iframe.remove();
   }
 
+  if (resizeMessageHandler) {
+    window.removeEventListener("message", resizeMessageHandler);
+    resizeMessageHandler = null;
+  }
+
   // Reset Netflix page margin
-  document.body.style.marginRight = "0";
+  clearNetflixLayoutOffset();
 
   console.log("Flixtra iframe removed, Netflix page restored.");
 }
