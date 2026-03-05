@@ -148,7 +148,16 @@ async function maybeComputeSkipRanges(tabId, showId, srtContent) {
     return;
   }
 
-  // Keep service worker alive during long Gemini analysis
+  // Try cache first — instant if this show+filters combo was analyzed before
+  const cached = await getCachedTimestamps(showId, enabledFilters);
+  if (cached && cached.length > 0) {
+    const skipRanges = normalizeRanges(cached);
+    await chromeStorageSet({ skipRanges });
+    console.log(`Loaded ${skipRanges.length} cached skipRanges for show ${showId}`);
+    return;
+  }
+
+  // No cache — run Gemini analysis with keep-alive
   startKeepAlive();
   try {
     console.log("Starting skip range analysis for show:", showId);
@@ -163,7 +172,6 @@ async function maybeComputeSkipRanges(tabId, showId, srtContent) {
     console.log(`Successfully stored ${skipRanges.length} skipRanges`);
   } catch (err) {
     console.error("maybeComputeSkipRanges failed:", err);
-    // Store empty array so skipRange.js doesn't break
     await chromeStorageSet({ skipRanges: [] });
   } finally {
     stopKeepAlive();

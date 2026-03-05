@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import os
 import json
 import re
@@ -27,8 +28,11 @@ if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 
 # Number of subtitle blocks to send per Gemini API call.
-# Large context window (1M tokens) means 200 blocks comfortably fits in one call.
-CHUNK_SIZE = 200
+# Gemini 2.5 Flash supports 1M token context — 500 blocks fits comfortably.
+CHUNK_SIZE = 500
+
+# Max concurrent Gemini API requests to avoid rate limits
+MAX_CONCURRENT = 5
 
 
 @dataclass(frozen=True)
@@ -181,7 +185,7 @@ def _analyze_chunk(
     return hits
 
 
-def analyze_subtitles(
+async def analyze_subtitles(
     subtitle_blocks: Iterable[SubtitleBlock],
     enabled_categories: Optional[Set[FilterCategory]] = None,
     merge_gap_ms: int = DEFAULT_MERGE_GAP_MS,
@@ -189,8 +193,8 @@ def analyze_subtitles(
 ) -> list[SkipRange]:
     """
     Gemini-powered analyzer:
-    - Batches subtitle blocks into chunks (CHUNK_SIZE per Gemini call) to avoid
-      per-block API calls, which would time out for full episodes.
+    - Batches subtitle blocks into chunks (CHUNK_SIZE per Gemini call)
+    - Runs chunks in parallel (up to MAX_CONCURRENT) for speed
     - Falls back to keyword matching if GEMINI_API_KEY is not set.
     - Returns merged SkipRanges for flagged content.
     """
@@ -222,28 +226,37 @@ def analyze_subtitles(
                         break
         return _merge_skip_ranges(hits, gap_ms=merge_gap_ms)
 
-    # ── Gemini batched analysis ───────────────────────────────────────────────
+    # ── Gemini parallel batched analysis ─────────────────────────────────────
     model = genai.GenerativeModel("gemini-2.5-flash")
     enabled_cat_names = [cat.value for cat in enabled]
 
     total_chunks = (len(blocks) + CHUNK_SIZE - 1) // CHUNK_SIZE
-    errors = 0
+    semaphore = asyncio.Semaphore(MAX_CONCURRENT)
 
-    for chunk_idx in range(total_chunks):
+    async def process_chunk(chunk_idx: int) -> list[SkipRange]:
         start = chunk_idx * CHUNK_SIZE
         chunk = blocks[start: start + CHUNK_SIZE]
         print(f"Analyzing chunk {chunk_idx + 1}/{total_chunks} ({len(chunk)} blocks)...")
 
-        try:
-            chunk_hits = _analyze_chunk(model, chunk, enabled_cat_names, enabled, multi_label)
-            hits.extend(chunk_hits)
-        except Exception:
-            errors += 1
-            # Continue with remaining chunks even if one fails
-            continue
+        async with semaphore:
+            try:
+                # Run blocking Gemini call in a thread to not block the event loop
+                chunk_hits = await asyncio.to_thread(
+                    _analyze_chunk, model, chunk, enabled_cat_names, enabled, multi_label
+                )
+                return chunk_hits
+            except Exception:
+                return []
+
+    # Launch all chunks in parallel (bounded by semaphore)
+    results = await asyncio.gather(*[process_chunk(i) for i in range(total_chunks)])
+
+    errors = sum(1 for r in results if not r)
+    for chunk_hits in results:
+        hits.extend(chunk_hits)
 
     if errors:
-        print(f"Warning: {errors}/{total_chunks} chunks failed during Gemini analysis")
+        print(f"Warning: {errors}/{total_chunks} chunks returned no results")
 
     result = _merge_skip_ranges(hits, gap_ms=merge_gap_ms)
     print(f"analyze_subtitles complete: {len(result)} skip ranges found from {len(blocks)} blocks")

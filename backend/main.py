@@ -165,8 +165,8 @@ async def analyze_subtitles_endpoint(request: AnalyzeSubtitlesRequest):
             except KeyError:
                 raise HTTPException(status_code=400, detail=f"Invalid filter category: {filter_name}")
         
-        # Analyze subtitles
-        skip_ranges = analyze_subtitles(
+        # Analyze subtitles (async — runs Gemini chunks in parallel)
+        skip_ranges = await analyze_subtitles(
             subtitle_blocks,
             enabled_categories=enabled_categories if enabled_categories else None
         )
