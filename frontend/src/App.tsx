@@ -18,6 +18,9 @@ function App() {
   const [filterMethod, setFilterMethod] = useState<FilterMethod>("skip");
   const [pgify, setPgify] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [preferencesLocked, setPreferencesLocked] = useState(false);
+  const [showLockedMessage, setShowLockedMessage] = useState(false);
+  const lockMessageTimeoutRef = useRef<number | null>(null);
   const [enabledFilterState, setEnabledFilterState] = useState<
     Record<FilterKey, boolean>
   >({
@@ -73,6 +76,46 @@ function App() {
     );
   }, []);
 
+  useEffect(() => {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      const activeTabUrl = tabs?.[0]?.url ?? "";
+      const watchingEpisode = /^https?:\/\/(www\.)?netflix\.com\/watch\/\d+/.test(
+        activeTabUrl,
+      );
+      setPreferencesLocked(watchingEpisode);
+    });
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (lockMessageTimeoutRef.current !== null) {
+        window.clearTimeout(lockMessageTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const showPreferencesLockedMessage = () => {
+    setShowLockedMessage(true);
+
+    if (lockMessageTimeoutRef.current !== null) {
+      window.clearTimeout(lockMessageTimeoutRef.current);
+    }
+
+    lockMessageTimeoutRef.current = window.setTimeout(() => {
+      setShowLockedMessage(false);
+      lockMessageTimeoutRef.current = null;
+    }, 2500);
+  };
+
+  const handleLockedPreferenceAction = (action: () => void) => {
+    if (preferencesLocked) {
+      showPreferencesLockedMessage();
+      return;
+    }
+
+    action();
+  };
+
   const updateFilter = (key: FilterKey, checked: boolean) => {
     setEnabledFilterState((prev) => ({
       ...prev,
@@ -118,6 +161,10 @@ function App() {
     saveDisplayName(displayName);
     setEditingName(false);
   };
+
+  const lockedControlClass = preferencesLocked
+    ? "opacity-50 cursor-not-allowed"
+    : "";
 
   return (
     <div className="bg-background text-foreground flex w-96 flex-col gap-4 p-4">
@@ -166,46 +213,66 @@ function App() {
         <div className="flex items-center justify-between">
           <h2>pg-ify</h2>
           <Switch
+            className={lockedControlClass}
             checked={pgify}
-            onCheckedChange={(value) => setPgify(value)}
+            onCheckedChange={(value) =>
+              handleLockedPreferenceAction(() => setPgify(value))
+            }
           />
         </div>
         <div className="flex items-center gap-2">
           <Checkbox
+            className={lockedControlClass}
             checked={enabledFilterState.profanity}
             onCheckedChange={(value) =>
-              updateFilter("profanity", value === true)
+              handleLockedPreferenceAction(() =>
+                updateFilter("profanity", value === true),
+              )
             }
           />
           <p>profanity</p>
         </div>
         <div className="flex items-center gap-2">
           <Checkbox
+            className={lockedControlClass}
             checked={enabledFilterState.sexual_content}
             onCheckedChange={(value) =>
-              updateFilter("sexual_content", value === true)
+              handleLockedPreferenceAction(() =>
+                updateFilter("sexual_content", value === true),
+              )
             }
           />
           <p>sexual content</p>
         </div>
         <div className="flex items-center gap-2">
           <Checkbox
+            className={lockedControlClass}
             checked={enabledFilterState.substance_use}
             onCheckedChange={(value) =>
-              updateFilter("substance_use", value === true)
+              handleLockedPreferenceAction(() =>
+                updateFilter("substance_use", value === true),
+              )
             }
           />
           <p>substance use</p>
         </div>
         <div className="flex items-center gap-2">
           <Checkbox
+            className={lockedControlClass}
             checked={enabledFilterState.violence}
             onCheckedChange={(value) =>
-              updateFilter("violence", value === true)
+              handleLockedPreferenceAction(() =>
+                updateFilter("violence", value === true),
+              )
             }
           />
           <p>violence and abuse</p>
         </div>
+        {showLockedMessage && (
+          <p className="text-primary text-sm">
+            please exit the show to change your preferences
+          </p>
+        )}
       </div>
       <div className="flex flex-col gap-2">
         <h2>filter method</h2>
@@ -215,6 +282,7 @@ function App() {
             className={`red-button w-1/3 ${
               filterMethod === "skip" && "bg-accent"
             }`}
+            disabled={preferencesLocked}
             onClick={() => setFilterMethod("skip")}
           >
             skip
@@ -224,6 +292,7 @@ function App() {
             className={`red-button w-1/3 ${
               filterMethod === "mute" && "bg-accent"
             }`}
+            disabled={preferencesLocked}
             onClick={() => setFilterMethod("mute")}
           >
             mute
@@ -233,6 +302,7 @@ function App() {
             className={`red-button w-1/3 ${
               filterMethod === "bleep" && "bg-accent"
             }`}
+            disabled={preferencesLocked}
             onClick={() => setFilterMethod("bleep")}
           >
             bleep
