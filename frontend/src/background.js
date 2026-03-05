@@ -4,6 +4,26 @@ const DEFAULT_FILTERS = ["profanity", "sexual_content", "substance_use", "violen
 // Optional: limit how much we store (SRTs can be big)
 const MAX_SRT_CHARS = 600_000; // ~0.6MB of text
 
+/* -----------------------------
+   Keep-alive: prevent MV3 service worker from being killed
+   during long-running backend calls (Gemini analysis).
+------------------------------*/
+let keepAliveInterval = null;
+
+function startKeepAlive() {
+  if (keepAliveInterval) return;
+  keepAliveInterval = setInterval(() => {
+    chrome.runtime.getPlatformInfo(() => {});
+  }, 20_000); // ping every 20s to stay alive
+}
+
+function stopKeepAlive() {
+  if (keepAliveInterval) {
+    clearInterval(keepAliveInterval);
+    keepAliveInterval = null;
+  }
+}
+
 chrome.webRequest.onBeforeRequest.addListener(
   (details) => {
     const url = details.url;
@@ -128,18 +148,26 @@ async function maybeComputeSkipRanges(tabId, showId, srtContent) {
     return;
   }
 
-  // Try cache first
-  const cached = await getCachedTimestamps(showId, enabledFilters);
-  //print("cached has length", cached.length);
+  // Keep service worker alive during long Gemini analysis
+  startKeepAlive();
+  try {
+    console.log("Starting skip range analysis for show:", showId);
 
-  //currently cache not working
-  /*const skipRangesMs =
-    cached && cached.length > 0 ? cached : await analyzeSubtitles(srtContent, showId, enabledFilters);*/
-  const skipRangesMs = await analyzeSubtitles(srtContent, showId, enabledFilters);
-  const skipRanges = normalizeRanges(skipRangesMs);
-  await chromeStorageSet({ skipRanges });
+    const skipRangesMs = await analyzeSubtitles(srtContent, showId, enabledFilters);
+    console.log("Backend returned", skipRangesMs.length, "raw skip ranges");
 
-  console.log(`Stored ${skipRanges.length} skipRanges`);
+    const skipRanges = normalizeRanges(skipRangesMs);
+    console.log("Normalized to", skipRanges.length, "skip ranges, writing to storage...");
+
+    await chromeStorageSet({ skipRanges });
+    console.log(`Successfully stored ${skipRanges.length} skipRanges`);
+  } catch (err) {
+    console.error("maybeComputeSkipRanges failed:", err);
+    // Store empty array so skipRange.js doesn't break
+    await chromeStorageSet({ skipRanges: [] });
+  } finally {
+    stopKeepAlive();
+  }
 }
 
 /* -----------------------------
