@@ -292,7 +292,7 @@ function App() {
           <button
             id="skipButton"
             className={`red-button w-1/3 ${
-              filterMethod === "skip" && "bg-accent"
+              filterMethod === "skip" && "!bg-accent"
             }`}
             disabled={preferencesLocked}
             onClick={() => setFilterMethod("skip")}
@@ -302,7 +302,7 @@ function App() {
           <button
             id="muteButton"
             className={`red-button w-1/3 ${
-              filterMethod === "mute" && "bg-accent"
+              filterMethod === "mute" && "!bg-accent"
             }`}
             disabled={preferencesLocked}
             onClick={() => setFilterMethod("mute")}
@@ -312,7 +312,7 @@ function App() {
           <button
             id="bleepButton"
             className={`red-button w-1/3 ${
-              filterMethod === "bleep" && "bg-accent"
+              filterMethod === "bleep" && "!bg-accent"
             }`}
             disabled={preferencesLocked}
             onClick={() => setFilterMethod("bleep")}
