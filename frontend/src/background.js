@@ -157,19 +157,11 @@ async function maybeComputeSkipRanges(tabId, showId, srtContent) {
     return;
   }
 
-  // No cache — run Gemini analysis with keep-alive
+  // No cache — run streaming Gemini analysis with keep-alive
   startKeepAlive();
   try {
-    console.log("Starting skip range analysis for show:", showId);
-
-    const skipRangesMs = await analyzeSubtitles(srtContent, showId, enabledFilters);
-    console.log("Backend returned", skipRangesMs.length, "raw skip ranges");
-
-    const skipRanges = normalizeRanges(skipRangesMs);
-    console.log("Normalized to", skipRanges.length, "skip ranges, writing to storage...");
-
-    await chromeStorageSet({ skipRanges });
-    console.log(`Successfully stored ${skipRanges.length} skipRanges`);
+    console.log("Starting streaming skip range analysis for show:", showId);
+    await analyzeSubtitlesStream(srtContent, showId, enabledFilters);
   } catch (err) {
     console.error("maybeComputeSkipRanges failed:", err);
     await chromeStorageSet({ skipRanges: [] });
@@ -231,6 +223,61 @@ async function getCachedTimestamps(showId, enabledFilters) {
   } catch (e) {
     console.warn("getCachedTimestamps failed", e);
     return [];
+  }
+}
+
+async function analyzeSubtitlesStream(srtContent, showId, enabledFilters) {
+  const payload = {
+    subtitle_content: srtContent,
+    show_id: String(showId),
+    enabled_filters: enabledFilters,
+    save_cache: true,
+  };
+
+  const res = await fetch(`${API_BASE_URL}/analyze_subtitles_stream`, {
+    method: "POST",
+    headers: { Accept: "text/event-stream", "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`analyze_subtitles_stream failed: ${res.status} ${errText}`);
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let accumulated = [];
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop(); // keep incomplete line in buffer
+
+    for (const line of lines) {
+      if (!line.startsWith("data: ")) continue;
+      try {
+        const event = JSON.parse(line.slice(6));
+        const chunkRanges = normalizeRanges(event.skip_ranges);
+
+        if (event.done) {
+          // Final event contains merged results — replace accumulated
+          await chromeStorageSet({ skipRanges: chunkRanges });
+          console.log(`Final: stored ${chunkRanges.length} merged skipRanges`);
+        } else {
+          // Intermediate — append and write incrementally
+          accumulated = accumulated.concat(chunkRanges);
+          await chromeStorageSet({ skipRanges: accumulated });
+          console.log(`Chunk ${event.chunk}/${event.total_chunks}: stored ${accumulated.length} skipRanges so far`);
+        }
+      } catch (e) {
+        console.warn("Failed to parse SSE event:", line, e);
+      }
+    }
   }
 }
 

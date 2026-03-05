@@ -1,15 +1,18 @@
+import json
+
 from fastapi import FastAPI, HTTPException, Query
+from fastapi.responses import StreamingResponse
 from contextlib import asynccontextmanager
 from app.cache import SkipRange
 import app.cache as db_utils
 from app.cache import Comment
-from app.filters.detector import analyze_subtitles, SubtitleBlock
+from app.filters.detector import analyze_subtitles, analyze_subtitles_stream, SubtitleBlock
 from app.filters.srt_parser import parse_srt
 from app.filters.categories import FilterCategory
 from typing import List, Optional
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
-from bson import ObjectId 
+from bson import ObjectId
 
 class AnalyzeSubtitlesRequest(BaseModel):
     subtitle_content: str
@@ -199,3 +202,67 @@ async def analyze_subtitles_endpoint(request: AnalyzeSubtitlesRequest):
         raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/analyze_subtitles_stream")
+async def analyze_subtitles_stream_endpoint(request: AnalyzeSubtitlesRequest):
+    print("=== analyze_subtitles_stream called ===")
+    print("show_id:", request.show_id)
+    print("enabled_filters:", request.enabled_filters)
+    print("subtitle chars:", len(request.subtitle_content))
+
+    parsed = parse_srt(request.subtitle_content)
+    subtitle_blocks = [
+        SubtitleBlock(start_ms=start, end_ms=end, text=text)
+        for start, end, text in parsed
+    ]
+
+    enabled_categories = set()
+    for filter_name in request.enabled_filters:
+        try:
+            enabled_categories.add(FilterCategory[filter_name.upper()])
+        except KeyError:
+            raise HTTPException(status_code=400, detail=f"Invalid filter category: {filter_name}")
+
+    async def event_generator():
+        all_ranges = []
+        async for chunk_hits, chunk_num, total_chunks, is_final in analyze_subtitles_stream(
+            subtitle_blocks,
+            enabled_categories=enabled_categories if enabled_categories else None,
+        ):
+            ranges = [
+                {"start_ms": sr.time_range.start.ms, "end_ms": sr.time_range.end.ms, "category": sr.category}
+                for sr in chunk_hits
+            ]
+
+            if is_final:
+                all_ranges = ranges  # final yield is the merged result
+            else:
+                all_ranges.extend(ranges)
+
+            event = json.dumps({
+                "skip_ranges": ranges,
+                "chunk": chunk_num,
+                "total_chunks": total_chunks,
+                "done": is_final,
+            })
+            yield f"data: {event}\n\n"
+
+        # Cache the final merged result
+        if request.save_cache and all_ranges:
+            from app.filters.skip_range import SkipRange as FilterSkipRange
+            cache_ranges = [
+                FilterSkipRange.from_ms(r["start_ms"], r["end_ms"], r["category"])
+                for r in all_ranges
+            ]
+            await db_utils.save_timestamps(
+                show_id=request.show_id,
+                filters=sorted(request.enabled_filters),
+                skip_ranges=cache_ranges,
+            )
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )

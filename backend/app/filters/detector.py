@@ -5,7 +5,7 @@ import os
 import json
 import re
 from dataclasses import dataclass
-from typing import Iterable, List, Optional, Set
+from typing import AsyncGenerator, Iterable, List, Optional, Set, Tuple
 
 from dotenv import load_dotenv
 import google.generativeai as genai
@@ -261,3 +261,109 @@ async def analyze_subtitles(
     result = _merge_skip_ranges(hits, gap_ms=merge_gap_ms)
     print(f"analyze_subtitles complete: {len(result)} skip ranges found from {len(blocks)} blocks")
     return result
+
+
+async def analyze_subtitles_stream(
+    subtitle_blocks: Iterable[SubtitleBlock],
+    enabled_categories: Optional[Set[FilterCategory]] = None,
+    merge_gap_ms: int = DEFAULT_MERGE_GAP_MS,
+    multi_label: bool = False,
+) -> AsyncGenerator[Tuple[list[SkipRange], int, int, bool], None]:
+    """
+    Streaming version of analyze_subtitles.
+    Yields (chunk_hits, chunk_index, total_chunks, is_final) tuples as each chunk completes.
+    The final yield contains the merged result across all chunks.
+    Falls back to keyword matching (single yield) if no API key.
+    """
+    enabled = enabled_categories or set(DEFAULT_KEYWORDS.keys())
+
+    blocks = [
+        b for b in subtitle_blocks
+        if (b.text or "").strip() and b.end_ms > b.start_ms
+    ]
+
+    # ── Keyword fallback ──────────────────────────────────────────────────────
+    if not GEMINI_API_KEY:
+        print("No GEMINI_API_KEY set — using keyword matching fallback")
+        patterns_by_cat = {
+            cat: _compile_patterns(DEFAULT_KEYWORDS.get(cat, []))
+            for cat in enabled
+        }
+        hits: list[SkipRange] = []
+        for b in blocks:
+            text = b.text.strip()
+            for cat, patterns in patterns_by_cat.items():
+                if not patterns:
+                    continue
+                if any(p.search(text) for p in patterns):
+                    hits.append(SkipRange.from_ms(b.start_ms, b.end_ms, cat.value))
+                    if not multi_label:
+                        break
+        merged = _merge_skip_ranges(hits, gap_ms=merge_gap_ms)
+        yield (merged, 1, 1, True)
+        return
+
+    # ── Gemini streaming analysis ─────────────────────────────────────────────
+    model = genai.GenerativeModel("gemini-2.5-flash")
+    enabled_cat_names = [cat.value for cat in enabled]
+
+    total_chunks = (len(blocks) + CHUNK_SIZE - 1) // CHUNK_SIZE
+    all_hits: list[SkipRange] = []
+
+    # Process chunk 0 FIRST and yield immediately so the frontend gets results ASAP
+    first_chunk = blocks[:CHUNK_SIZE]
+    print(f"Analyzing chunk 1/{total_chunks} ({len(first_chunk)} blocks) [eager]...")
+    try:
+        first_hits = await asyncio.to_thread(
+            _analyze_chunk, model, first_chunk, enabled_cat_names, enabled, multi_label
+        )
+    except Exception:
+        first_hits = []
+
+    all_hits.extend(first_hits)
+
+    if total_chunks == 1:
+        merged = _merge_skip_ranges(all_hits, gap_ms=merge_gap_ms)
+        print(f"analyze_subtitles_stream complete: {len(merged)} skip ranges from {len(blocks)} blocks")
+        yield (merged, 1, 1, True)
+        return
+
+    # Yield first chunk results immediately (unmerged — frontend uses them right away)
+    yield (first_hits, 1, total_chunks, False)
+
+    # Now launch remaining chunks in parallel
+    semaphore = asyncio.Semaphore(MAX_CONCURRENT)
+    queue: asyncio.Queue[Tuple[int, list[SkipRange]]] = asyncio.Queue()
+
+    async def process_chunk(chunk_idx: int) -> None:
+        start = chunk_idx * CHUNK_SIZE
+        chunk = blocks[start: start + CHUNK_SIZE]
+        print(f"Analyzing chunk {chunk_idx + 1}/{total_chunks} ({len(chunk)} blocks)...")
+
+        async with semaphore:
+            try:
+                chunk_hits = await asyncio.to_thread(
+                    _analyze_chunk, model, chunk, enabled_cat_names, enabled, multi_label
+                )
+                await queue.put((chunk_idx, chunk_hits))
+            except Exception:
+                await queue.put((chunk_idx, []))
+
+    remaining = total_chunks - 1
+    tasks = [asyncio.create_task(process_chunk(i)) for i in range(1, total_chunks)]
+
+    completed = 0
+    while completed < remaining:
+        _idx, chunk_hits = await queue.get()
+        completed += 1
+        all_hits.extend(chunk_hits)
+        is_final = completed == remaining
+
+        if is_final:
+            merged = _merge_skip_ranges(all_hits, gap_ms=merge_gap_ms)
+            print(f"analyze_subtitles_stream complete: {len(merged)} skip ranges from {len(blocks)} blocks")
+            yield (merged, completed + 1, total_chunks, True)
+        else:
+            yield (chunk_hits, completed + 1, total_chunks, False)
+
+    await asyncio.gather(*tasks)
