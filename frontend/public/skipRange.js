@@ -5,6 +5,71 @@ let filterMethod = "";
 let bleeping = false;
 let bleepCtx = null;
 let filterContent = false;
+let analyzing = false;
+
+function getVideo() {
+  return document.querySelector("video");
+}
+
+function showAnalyzingOverlay() {
+  if (document.getElementById("pgify-overlay")) return;
+
+  // Retry pausing until video element exists
+  const tryPause = () => {
+    const video = getVideo();
+    if (video) {
+      video.pause();
+    } else {
+      setTimeout(tryPause, 200);
+    }
+  };
+  tryPause();
+
+  const overlay = document.createElement("div");
+  overlay.id = "pgify-overlay";
+  overlay.style.cssText = `
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 99999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-family: Netflix Sans, Arial, sans-serif;
+  `;
+
+  overlay.innerHTML = `
+    <div style="
+      width: 48px; height: 48px;
+      border: 4px solid rgba(255,255,255,0.2);
+      border-top-color: #E50914;
+      border-radius: 50%;
+      animation: pgify-spin 0.8s linear infinite;
+      margin-bottom: 20px;
+    "></div>
+    <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px;">Analyzing content...</div>
+    <div style="font-size: 13px; color: rgba(255,255,255,0.6);">Flixtra is scanning this episode. Just a moment.</div>
+
+    <style>
+      @keyframes pgify-spin {
+        to { transform: rotate(360deg); }
+      }
+    </style>
+  `;
+
+  document.body.appendChild(overlay);
+}
+
+function hideAnalyzingOverlay() {
+  const overlay = document.getElementById("pgify-overlay");
+  if (overlay) overlay.remove();
+
+  const video = getVideo();
+  if (video) video.play();
+}
 
 // load time
 chrome.storage.local.get(["skipRanges", "skipRange", "filterMethod", "pgifyActive"], (data) => {
@@ -16,14 +81,27 @@ chrome.storage.local.get(["skipRanges", "skipRange", "filterMethod", "pgifyActiv
 
   filterMethod = data.filterMethod;
   filterContent = data.pgifyActive === true;
+  if (filterContent && skipRanges.length === 0) {
+    analyzing = true;
+    showAnalyzingOverlay();
+  }
 });
 
 // check for changes
 chrome.storage.onChanged.addListener((changes) => {
   if (changes.skipRanges) {
-    skipRanges = Array.isArray(changes.skipRanges.newValue)
-      ? changes.skipRanges.newValue
-      : [];
+    const newRanges = changes.skipRanges.newValue;
+    skipRanges = Array.isArray(newRanges) ? newRanges : [];
+
+    if (skipRanges.length === 0 && filterContent) {
+      // New episode started — show overlay again
+      analyzing = true;
+      showAnalyzingOverlay();
+    } else if (analyzing && skipRanges.length > 0) {
+      // First chunk landed — unblock
+      analyzing = false;
+      hideAnalyzingOverlay();
+    }
   } else if (changes.skipRange) {
     const range = changes.skipRange.newValue;
     skipRanges = range?.start != null && range?.end != null ? [range] : [];
@@ -55,7 +133,7 @@ function attachToVideo(video) {
   });
 
   video.addEventListener("timeupdate", () => {
-    console.log(`Current time: ${video.currentTime}`); // for debugging purposes/easy view in console
+    // console.log(`Current time: ${video.currentTime}`); // for debugging purposes/easy view in console
     if (filterContent) {
       const activeRange = getActiveRange(video.currentTime);
 
@@ -119,7 +197,7 @@ function resumeBleep() {
 
 
 setInterval(() => {
-  const video = document.querySelector("video");
+  const video = getVideo();
   if (video && !video.dataset.skipAttached) {
     video.dataset.skipAttached = true;
     attachToVideo(video);
