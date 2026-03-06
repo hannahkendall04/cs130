@@ -62,10 +62,7 @@ async function processSubtitles(url, tabId) {
     const videoTitle = videoInfo.title || "Netflix_Show";
     const showId = videoInfo.showId || videoTitle || "Netflix_Show";
 
-    // 1) KEEP downloading behavior
-    downloadSRT(srtContent, videoTitle);
-
-    // 2) Store subtitles in chrome.storage so we can reuse later
+    // 1) Store subtitles in chrome.storage so we can reuse later
     await storeLastSubtitle(tabId, {
       showId,
       title: videoTitle,
@@ -78,24 +75,6 @@ async function processSubtitles(url, tabId) {
   } catch (err) {
     console.error("Extraction Error:", err);
   }
-}
-
-/* -----------------------------
-   Download (same behavior, but takes SRT string directly)
-------------------------------*/
-function downloadSRT(srtContent, filename) {
-  const blob = new Blob([srtContent], { type: "text/srt" });
-  const reader = new FileReader();
-
-  reader.onloadend = function () {
-    chrome.downloads.download({
-      url: reader.result,
-      filename: `${filename}.srt`,
-      saveAs: false,
-    });
-  };
-
-  reader.readAsDataURL(blob);
 }
 
 /* -----------------------------
