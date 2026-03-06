@@ -54,6 +54,8 @@ async function processSubtitles(url, tabId) {
     // Threshold to ensure we only download the full subtitle file
     if (parsedSubs.length <= 100) return;
 
+    await chromeStorageSet({ skipRanges: [] });
+
     // Convert to SRT once
     const srtContent = convertToSRT(parsedSubs);
 
