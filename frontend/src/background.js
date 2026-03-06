@@ -343,6 +343,29 @@ function convertToSRT(subs) {
     .join("\n");
 }
 
+async function getCurrentVideoTime(tabId) {
+  const resp = await chromeTabsSendMessage(tabId, { type: "GET_VIDEO_TIME" });
+  return resp?.currentTime || 0; // in seconds
+}
+
+function trimSrtFromTime(srtContent, startSeconds) {
+  if (!startSeconds || startSeconds <= 0) return srtContent;
+  
+  const startMs = startSeconds * 1000;
+  const blocks = srtContent.split("\n\n").filter(Boolean);
+  
+  const filtered = blocks.filter((block) => {
+    // SRT timestamp line looks like: 00:45:00,000 --> 00:45:03,000
+    const timeMatch = block.match(/(\d{2}:\d{2}:\d{2},\d{3}) --> /);
+    if (!timeMatch) return true; // keep if we can't parse
+    const [h, m, s] = timeMatch[1].split(/[:,]/);
+    const ms = (+h * 3600 + +m * 60 + +s) * 1000 + +timeMatch[1].split(",")[1];
+    return ms >= startMs;
+  });
+  
+  return filtered.join("\n\n");
+}
+
 function formatSRTTime(ms) {
   const h = Math.floor(ms / 3600000).toString().padStart(2, "0");
   const m = Math.floor((ms % 3600000) / 60000).toString().padStart(2, "0");
