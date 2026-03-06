@@ -10,7 +10,7 @@ class FilterCategory(str, Enum):
     GORE = "GORE"
     SUBSTANCE_USE = "SUBSTANCE_USE"
     SELF_HARM = "SELF_HARM"
-    HARASSMENT_BULLYING = "HARASSMENT_BULLYING"
+    BULLYING = "BULLYING"
     HATE_SPEECH = "HATE_SPEECH"
     CRIMINAL_ACTIVITY = "CRIMINAL_ACTIVITY"
     WEAPONS = "WEAPONS"
@@ -102,7 +102,7 @@ DEFAULT_KEYWORDS: dict[FilterCategory, list[str]] = {
         "i deserve to die"
     ],
 
-    FilterCategory.HARASSMENT_BULLYING: [
+    FilterCategory.BULLYING: [
         "loser", "idiot", "stupid",
         "moron", "shut up",
         "worthless", "pathetic",

@@ -9,6 +9,7 @@ const FILTER_KEYS = [
   "sexual_content",
   "substance_use",
   "violence",
+  "bullying",
 ] as const;
 
 type FilterKey = (typeof FILTER_KEYS)[number];
@@ -29,6 +30,7 @@ function App() {
     sexual_content: true,
     substance_use: true,
     violence: true,
+    bullying: true,
   });
 
   const [displayName, setDisplayName] = useState("");
@@ -71,6 +73,7 @@ function App() {
             sexual_content: data.enabledFilters.includes("sexual_content"),
             substance_use: data.enabledFilters.includes("substance_use"),
             violence: data.enabledFilters.includes("violence"),
+            bullying: data.enabledFilters.includes("bullying"),
           });
         }
       },
@@ -280,6 +283,18 @@ function App() {
           />
           <p>violence and abuse</p>
         </div>
+        <div className="flex items-center gap-2">
+          <Checkbox
+            className={lockedControlClass}
+            checked={enabledFilterState.bullying}
+            onCheckedChange={(value) =>
+              handleLockedPreferenceAction(() =>
+                updateFilter("bullying", value === true),
+              )
+            }
+          />
+          <p>bullying</p>
+        </div>
         {showLockedMessage && (
           <p className="text-primary text-sm">
             please exit the show to change your preferences
@@ -292,7 +307,7 @@ function App() {
           <button
             id="skipButton"
             className={`red-button w-1/3 ${
-              filterMethod === "skip" && "!bg-accent"
+              filterMethod === "skip" && "bg-accent"
             }`}
             disabled={preferencesLocked}
             onClick={() => setFilterMethod("skip")}
@@ -302,7 +317,7 @@ function App() {
           <button
             id="muteButton"
             className={`red-button w-1/3 ${
-              filterMethod === "mute" && "!bg-accent"
+              filterMethod === "mute" && "bg-accent"
             }`}
             disabled={preferencesLocked}
             onClick={() => setFilterMethod("mute")}
@@ -312,7 +327,7 @@ function App() {
           <button
             id="bleepButton"
             className={`red-button w-1/3 ${
-              filterMethod === "bleep" && "!bg-accent"
+              filterMethod === "bleep" && "bg-accent"
             }`}
             disabled={preferencesLocked}
             onClick={() => setFilterMethod("bleep")}

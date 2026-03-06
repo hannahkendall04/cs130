@@ -1,5 +1,5 @@
 const API_BASE_URL = "http://127.0.0.1:8000";
-const DEFAULT_FILTERS = ["profanity", "sexual_content", "substance_use", "violence"];
+const DEFAULT_FILTERS = ["profanity", "sexual_content", "substance_use", "violence", "bullying"];
 
 // Optional: limit how much we store (SRTs can be big)
 const MAX_SRT_CHARS = 600_000; // ~0.6MB of text
