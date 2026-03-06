@@ -22,5 +22,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       showId: getNetflixShowId(),  // e.g. "81234567"
     });
   }
+  if (message.type === "GET_VIDEO_TIME") {
+    const video = document.querySelector("video");
+    sendResponse({ currentTime: video?.currentTime || 0 });
+  }
   return true; 
 });

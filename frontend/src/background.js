@@ -51,9 +51,12 @@ async function processSubtitles(url, tabId) {
     const xmlText = await response.text();
     const parsedSubs = parseDFXP(xmlText);
 
+    
+
     // Threshold to ensure we only download the full subtitle file
     if (parsedSubs.length <= 100) return;
 
+    await chromeStorageSet({ currentVideoTime: 0 });
     // Convert to SRT once
     const srtContent = convertToSRT(parsedSubs);
 
@@ -157,6 +160,11 @@ async function maybeComputeSkipRanges(tabId, showId, srtContent) {
     return;
   }
 
+   // Trim SRT to current video position to avoid analyzing already-watched content
+   /*const currentTime = await getCurrentVideoTime(tabId);
+   console.log(`Trimming SRT from ${currentTime}s`);
+   const trimmedSrt = trimSrtFromTime(srtContent, currentTime);*/
+ 
   // No cache — run streaming Gemini analysis with keep-alive
   startKeepAlive();
   try {
@@ -344,8 +352,8 @@ function convertToSRT(subs) {
 }
 
 async function getCurrentVideoTime(tabId) {
-  const resp = await chromeTabsSendMessage(tabId, { type: "GET_VIDEO_TIME" });
-  return resp?.currentTime || 0; // in seconds
+  const data = await chromeStorageGet(["currentVideoTime"]);
+  return data.currentVideoTime || 0;
 }
 
 function trimSrtFromTime(srtContent, startSeconds) {

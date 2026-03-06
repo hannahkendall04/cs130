@@ -53,6 +53,8 @@ function attachToVideo(video) {
   video.addEventListener("play", () => {
     if (bleeping) resumeBleep();
   });
+      //chrome.storage.local.set({ currentVideoTime: video.currentTime });
+
 
   video.addEventListener("timeupdate", () => {
     console.log(`Current time: ${video.currentTime}`); // for debugging purposes/easy view in console
