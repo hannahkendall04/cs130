@@ -67,8 +67,17 @@ function hideAnalyzingOverlay() {
   const overlay = document.getElementById("pgify-overlay");
   if (overlay) overlay.remove();
 
-  const video = getVideo();
-  if (video) video.play();
+  const tryPlay = () => {
+    const video = getVideo();
+    if (video) {
+      video.play().catch(() => {
+        setTimeout(tryPlay, 200);
+      });
+    } else {
+      setTimeout(tryPlay, 200);
+    }
+  };
+  tryPlay();
 }
 
 // load time
@@ -115,6 +124,17 @@ chrome.storage.onChanged.addListener((changes) => {
     filterContent = changes.pgifyActive.newValue;
   }
 });
+
+const observer = new MutationObserver(() => {
+  if (!window.location.href.includes("/watch/")) {
+    if (analyzing) {
+      analyzing = false;
+      hideAnalyzingOverlay();
+    }
+  }
+});
+
+observer.observe(document.body, { childList: true, subtree: true });
 
 function getActiveRange(currentTime) {
   return skipRanges.find(
