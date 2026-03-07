@@ -54,8 +54,6 @@ async function processSubtitles(url, tabId) {
     // Threshold to ensure we only download the full subtitle file
     if (parsedSubs.length <= 100) return;
 
-    await chromeStorageSet({ skipRanges: [] });
-
     // Convert to SRT once
     const srtContent = convertToSRT(parsedSubs);
 
@@ -71,8 +69,20 @@ async function processSubtitles(url, tabId) {
       srt: truncateSrt(srtContent),
       updatedAt: Date.now(),
     });
+    
+    // Check cache BEFORE clearing skipRanges
+    const enabledFilters = await getEnabledFilters();
+    const cached = await getCachedTimestamps(showId, enabledFilters);
 
-    // 3) (Optional but recommended) compute and store skip ranges now
+    if (cached && cached.length > 0) {
+      // Cache hit: set ranges directly, no overlay ever shown
+      const skipRanges = normalizeRanges(cached);
+      await chromeStorageSet({ skipRanges });
+      return;
+    }
+
+    // No cache: now clear and trigger overlay
+    await chromeStorageSet({ skipRanges: [] });
     await maybeComputeSkipRanges(tabId, showId, srtContent);
   } catch (err) {
     console.error("Extraction Error:", err);
