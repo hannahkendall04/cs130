@@ -105,6 +105,28 @@ uvicorn main:app --reload
 
 This will start the Vite development server and open your default browser.
 
+## Running Tests
+
+Unit tests currently live under `backend/app/filters` and use Python's built-in `unittest` runner. To run all backend filter tests:
+
+   - From `backend/`:
+   ```sh
+   python -m unittest discover -s app/filters -p "test_*.py" -v
+   ```
+
+   - From repo root:
+   ```sh
+   python -m unittest discover -s backend/app/filters -p "test_*.py" -v
+   ```
+
+3. (Optional) Run a specific test file, class, or method.
+
+   ```sh
+   python -m unittest app.filters.test_detector_unit -v
+   python -m unittest app.filters.test_detector_unit.TestDetectorHelpers -v
+   python -m unittest app.filters.test_detector_unit.TestDetectorHelpers.test_compile_patterns_word_boundaries -v
+   ```
+
 ## License
 
 This project is licensed under the MIT License.
