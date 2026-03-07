@@ -119,7 +119,7 @@ Unit tests currently live under `backend/app/filters` and use Python's built-in 
    python -m unittest discover -s backend/app/filters -p "test_*.py" -v
    ```
 
-3. (Optional) Run a specific test file, class, or method.
+(Optional) Run a specific test file, class, or method.
 
    ```sh
    python -m unittest app.filters.test_detector_unit -v
