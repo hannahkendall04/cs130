@@ -1,7 +1,7 @@
 import "./App.css";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
-import { Edit, Check } from "lucide-react";
+import { Edit, Check, X } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 
 const FILTER_KEYS = [
@@ -158,6 +158,11 @@ function App() {
     );
   };
 
+  const handleClose = () => {
+    chrome.storage.session.set({ popupDismissed: true });
+    window.close();
+  };
+
   // const handlePost = () => {
   //   chrome.storage.local.set({
   //     commentData: {
@@ -183,6 +188,13 @@ function App() {
 
   return (
     <div className="bg-background text-foreground flex w-96 flex-col gap-4 p-4">
+      <button
+        onClick={handleClose}
+        className="text-muted-foreground hover:text-foreground absolute right-3 top-3 transition-colors hover:cursor-pointer"
+        aria-label="close"
+      >
+        <X size={16} />
+      </button>
       <h1 className="text-primary w-full text-center">flixtra</h1>
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-1">
