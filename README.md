@@ -2,6 +2,12 @@
 
 A Chrome extension that provides extra features to Netflix using React and [Vite](https://vitejs.dev/) with TypeScript along with a FastAPI backend.
 
+### About this Project 
+
+#### Goals
+
+#### High-Level Design 
+
 ## Getting Started
 
 ### Prerequisites

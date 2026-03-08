@@ -1,0 +1,90 @@
+{
+  "test_skip_ranges": {
+    "standard": [
+      {"start_ms": 0, "end_ms": 5000, "category": "PROFANITY"},
+      {"start_ms": 10000, "end_ms": 30000, "category": "SEXUAL_CONTENT"},
+      {"start_ms": 60000, "end_ms": 90000, "category": "VIOLENCE"},
+      {"start_ms": 120000, "end_ms": 125000, "category": "SUBSTANCE_USE"},
+      {"start_ms": 300000, "end_ms": 360000, "category": "HATE_SPEECH"},
+      {"start_ms": 500000, "end_ms": 510000, "category": "GORE"},
+      {"start_ms": 999000, "end_ms": 1000000, "category": "WEAPONS"}
+    ],
+    "short_durations": [
+      {"start_ms": 1000, "end_ms": 1001, "category": "PROFANITY"},
+      {"start_ms": 5000, "end_ms": 5100, "category": "VIOLENCE"},
+      {"start_ms": 10000, "end_ms": 10500, "category": "GORE"},
+      {"start_ms": 20000, "end_ms": 21000, "category": "SEXUAL_CONTENT"}
+    ],
+    "long_durations": [
+      {"start_ms": 0, "end_ms": 600000, "category": "PROFANITY"},
+      {"start_ms": 0, "end_ms": 3600000, "category": "VIOLENCE"},
+      {"start_ms": 500000, "end_ms": 1000000, "category": "SUBSTANCE_USE"},
+      {"start_ms": 100000, "end_ms": 700000, "category": "HATE_SPEECH"}
+    ],
+    "zero_length": [
+      {"start_ms": 0, "end_ms": 0, "category": "PROFANITY"},
+      {"start_ms": 50000, "end_ms": 50000, "category": "GORE"},
+      {"start_ms": 100000, "end_ms": 100000, "category": "WEAPONS"}
+    ],
+    "large_timestamps": [
+      {"start_ms": 86400000, "end_ms": 86410000, "category": "VIOLENCE"},
+      {"start_ms": 999999000, "end_ms": 999999999, "category": "TERROR_THREATS"},
+      {"start_ms": 1000000000, "end_ms": 1000005000, "category": "CRIMINAL_ACTIVITY"}
+    ],
+    "overlapping_same_category": [
+      {"start_ms": 1000, "end_ms": 5000, "category": "VIOLENCE"},
+      {"start_ms": 3000, "end_ms": 8000, "category": "VIOLENCE"},
+      {"start_ms": 7000, "end_ms": 12000, "category": "VIOLENCE"}
+    ],
+    "overlapping_different_categories": [
+      {"start_ms": 20000, "end_ms": 40000, "category": "PROFANITY"},
+      {"start_ms": 30000, "end_ms": 50000, "category": "SEXUAL_CONTENT"},
+      {"start_ms": 35000, "end_ms": 55000, "category": "NUDITY"}
+    ],
+    "adjacent_ranges": [
+      {"start_ms": 10000, "end_ms": 20000, "category": "BULLYING"},
+      {"start_ms": 20000, "end_ms": 30000, "category": "BULLYING"}
+    ],
+    "all_categories": [
+      {"start_ms": 0, "end_ms": 5000, "category": "PROFANITY"},
+      {"start_ms": 10000, "end_ms": 15000, "category": "SEXUAL_CONTENT"},
+      {"start_ms": 20000, "end_ms": 25000, "category": "NUDITY"},
+      {"start_ms": 30000, "end_ms": 35000, "category": "VIOLENCE"},
+      {"start_ms": 40000, "end_ms": 45000, "category": "GORE"},
+      {"start_ms": 50000, "end_ms": 55000, "category": "SUBSTANCE_USE"},
+      {"start_ms": 60000, "end_ms": 65000, "category": "SELF_HARM"},
+      {"start_ms": 70000, "end_ms": 75000, "category": "BULLYING"},
+      {"start_ms": 80000, "end_ms": 85000, "category": "HATE_SPEECH"},
+      {"start_ms": 90000, "end_ms": 95000, "category": "CRIMINAL_ACTIVITY"},
+      {"start_ms": 100000, "end_ms": 105000, "category": "WEAPONS"},
+      {"start_ms": 110000, "end_ms": 115000, "category": "TERROR_THREATS"}
+    ],
+    "contiguous_batch": [
+      {"start_ms": 0, "end_ms": 10000, "category": "VIOLENCE"},
+      {"start_ms": 10000, "end_ms": 20000, "category": "VIOLENCE"},
+      {"start_ms": 20000, "end_ms": 30000, "category": "VIOLENCE"},
+      {"start_ms": 30000, "end_ms": 40000, "category": "VIOLENCE"},
+      {"start_ms": 40000, "end_ms": 50000, "category": "VIOLENCE"},
+      {"start_ms": 50000, "end_ms": 60000, "category": "VIOLENCE"},
+      {"start_ms": 60000, "end_ms": 70000, "category": "VIOLENCE"},
+      {"start_ms": 70000, "end_ms": 80000, "category": "VIOLENCE"},
+      {"start_ms": 80000, "end_ms": 90000, "category": "VIOLENCE"},
+      {"start_ms": 90000, "end_ms": 100000, "category": "VIOLENCE"}
+    ],
+    "non_contiguous_same_category": [
+      {"start_ms": 0, "end_ms": 5000, "category": "PROFANITY"},
+      {"start_ms": 50000, "end_ms": 55000, "category": "PROFANITY"},
+      {"start_ms": 100000, "end_ms": 105000, "category": "PROFANITY"},
+      {"start_ms": 200000, "end_ms": 210000, "category": "PROFANITY"}
+    ],
+    "interleaved_categories": [
+      {"start_ms": 0, "end_ms": 10000, "category": "PROFANITY"},
+      {"start_ms": 10000, "end_ms": 20000, "category": "VIOLENCE"},
+      {"start_ms": 20000, "end_ms": 25000, "category": "GORE"},
+      {"start_ms": 25000, "end_ms": 30000, "category": "SEXUAL_CONTENT"},
+      {"start_ms": 30000, "end_ms": 60000, "category": "HATE_SPEECH"},
+      {"start_ms": 60000, "end_ms": 70000, "category": "WEAPONS"},
+      {"start_ms": 70000, "end_ms": 80000, "category": "TERROR_THREATS"}
+    ]
+  }
+}
