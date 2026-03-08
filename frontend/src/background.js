@@ -373,3 +373,12 @@ function convertToMs(timeStr) {
   const hours = parseInt(parts.pop() || "0", 10);
   return (hours * 3600 + minutes * 60 + seconds) * 1000;
 }
+
+chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+  if (changeInfo.status === "complete" && tab.url?.includes("netflix.com")) {
+    const { popupDismissed } = await chrome.storage.session.get("popupDismissed");
+    if (!popupDismissed) {
+      chrome.action.openPopup();
+    }
+  }
+});
