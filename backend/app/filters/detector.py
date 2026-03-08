@@ -29,7 +29,7 @@ if GEMINI_API_KEY:
 
 # Number of subtitle blocks to send per Gemini API call.
 # Gemini 2.5 Flash supports 1M token context — 500 blocks fits comfortably.
-CHUNK_SIZE = 500
+CHUNK_SIZE = 200
 
 # Max concurrent Gemini API requests to avoid rate limits
 MAX_CONCURRENT = 5
