@@ -378,7 +378,11 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   if (changeInfo.status === "complete" && tab.url?.includes("netflix.com")) {
     const { popupDismissed } = await chrome.storage.session.get("popupDismissed");
     if (!popupDismissed) {
-      chrome.action.openPopup();
+      try {
+        chrome.action.openPopup();
+      } catch (_) {
+        // Ignored — popup can't open if no active window is focused
+      }
     }
   }
 });

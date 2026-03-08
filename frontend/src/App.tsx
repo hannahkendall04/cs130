@@ -140,15 +140,16 @@ function App() {
       },
       () => {
         // IMPORTANT: tell background to recompute skip ranges immediately
-        chrome.runtime.sendMessage({ type: "FLIXTRA_OPTIONS_UPDATED" });
+        chrome.runtime.sendMessage({ type: "FLIXTRA_OPTIONS_UPDATED" }).catch(() => {});
 
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
           const activeTabId = tabs?.[0]?.id;
           if (typeof activeTabId === "number") {
-            chrome.tabs.sendMessage(activeTabId, {
-              type: "FLIXTRA_SET_SHOW_COMMENTS",
-              showComments,
-            });
+            chrome.tabs.sendMessage(
+              activeTabId,
+              { type: "FLIXTRA_SET_SHOW_COMMENTS", showComments },
+              () => void chrome.runtime.lastError, // suppress error
+            );
           }
         });
 
