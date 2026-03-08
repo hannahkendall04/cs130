@@ -46,7 +46,51 @@ async def lifespan(app: FastAPI):
     db_utils.client.close()
     print("Connection closed.")
 
-app = FastAPI(lifespan=lifespan)
+api_description = """
+
+### Capabilities 
+* **Post comments**: post comments to the MongoDB database
+* **Read comments**: retrieve comments from the MongoDB database given a Netflix showId
+* **Post timestamps**: post skip range timestamps to the MongoDB database
+* **Get timestamps**: retrieve skip range timestamps from the MongoDB database given a Netflix showId and selected filter categories
+* **Analyze subtitles**: analyze subtitles for a given Netflix show and extract skip range timestamps for selected filter categories
+* **Analyze subtitles stream**: analyze subtitles for a give Netflix show and extract skip range timestamps for selected filter categories (stream)
+"""
+
+tags_metadata = [
+    {
+        "name": "post_comment",
+        "description": "post comments to the MongoDB database"
+    },
+    {
+        "name": "get_comments",
+        "description": "retrieve comments from the MongoDB database given a Netflix showId"
+    },
+    {
+        "name": "post_timestamps",
+        "description": "post skip range timestamps to the MongoDB database"
+    },
+    {
+        "name": "get_timestamps",
+        "description": "retrieve skip range timestamps from the MongoDB database given a Netflix showId and selected filter categories"
+    },
+    {
+        "name": "analyze_subtitles",
+        "description": "analyze subtitles for a given Netflix show and extract skip range timestamps for selected filter categories"
+    },
+    {
+        "name": "analyze_subtitles_stream",
+        "description": "analyze subtitles for a given Netflix show and extract skip range timestamps for selected filter categories (stream)"
+    }
+]
+
+app = FastAPI(
+        title="Flixtra",
+        description=api_description,
+        summary="API documentation and endpoint descriptions for the Flixtra Chrome extension",
+        lifespan=lifespan,
+        openapi_tags=tags_metadata
+    )
 
 origins = [
     "https://www.netflix.com",
@@ -61,12 +105,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
-
-
-@app.post("/post_comment")
+@app.post("/post_comment", tags=["post_comment"])
 async def post_comment(comment: Comment):
     print(f"Received comment:\n {comment.user}\n {comment.comment}\n {comment.showId}\n {comment.startTime}\n {comment.endTime}\n")
     try:
@@ -76,7 +115,7 @@ async def post_comment(comment: Comment):
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@app.post("/get_comments")
+@app.post("/get_comments", tags=["get_comments"])
 async def get_comments(getComments: GetCommentsShowId):
     show_id = getComments.show_id
     print("getting comments...")
@@ -96,29 +135,16 @@ async def get_comments(getComments: GetCommentsShowId):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@app.post("/post_timestamps")
+@app.post("/post_timestamps", tags=["post_timestamps"])
 async def post_timestamps(skip_ranges: List[SkipRange], filters: List[str], show_id: str):
     try:
         await db_utils.save_timestamps(show_id=show_id, filters=filters, skip_ranges=skip_ranges)
         return {"status": "success", "show_id": show_id}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+    
 
-"""@app.get("/get_timestamps")
-async def get_timestamps(show_id: str, filters: List[str] = Query(...)):
-    print("=== get_timestamps called ===", show_id, filters)
-
-    try:
-        timestamps = await db_utils.get_cached_timestamps(show_id=show_id, filters=filters)
-        if timestamps is None:
-            raise HTTPException(status_code=404, detail="No cached timestamps found")
-        return timestamps
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))"""
-
-@app.get("/get_timestamps")
+@app.get("/get_timestamps", tags=["get_timestamps"])
 async def get_timestamps(show_id: str, filters: List[str] = Query(...)):
     print("=== get_timestamps called ===", show_id, filters)
 
@@ -144,7 +170,7 @@ async def get_timestamps(show_id: str, filters: List[str] = Query(...)):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@app.post("/analyze_subtitles")
+@app.post("/analyze_subtitles", tags=["analyze_subtitles"])
 async def analyze_subtitles_endpoint(request: AnalyzeSubtitlesRequest):
     try:
         print("=== analyze_subtitles called ===")
@@ -204,7 +230,7 @@ async def analyze_subtitles_endpoint(request: AnalyzeSubtitlesRequest):
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@app.post("/analyze_subtitles_stream")
+@app.post("/analyze_subtitles_stream", tags=["analyze_subtitles_stream"])
 async def analyze_subtitles_stream_endpoint(request: AnalyzeSubtitlesRequest):
     print("=== analyze_subtitles_stream called ===")
     print("show_id:", request.show_id)
