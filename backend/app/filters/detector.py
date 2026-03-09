@@ -208,13 +208,15 @@ async def analyze_subtitles(
 
     hits: list[SkipRange] = []
 
+    # Build keyword patterns (used for fallback in both paths)
+    patterns_by_cat = {
+        cat: _compile_patterns(DEFAULT_KEYWORDS.get(cat, []))
+        for cat in enabled
+    }
+
     # ── Keyword fallback (no API key) ────────────────────────────────────────
     if not GEMINI_API_KEY:
         print("No GEMINI_API_KEY set — using keyword matching fallback")
-        patterns_by_cat = {
-            cat: _compile_patterns(DEFAULT_KEYWORDS.get(cat, []))
-            for cat in enabled
-        }
         for b in blocks:
             text = b.text.strip()
             for cat, patterns in patterns_by_cat.items():
@@ -246,7 +248,19 @@ async def analyze_subtitles(
                 )
                 return chunk_hits
             except Exception:
-                return []
+                # Fall back to keyword matching for this chunk
+                print(f"Gemini error for chunk {chunk_idx + 1} — falling back to keyword matching")
+                keyword_hits = []
+                for b in chunk:
+                    text = b.text.strip()
+                    for cat, patterns in patterns_by_cat.items():
+                        if not patterns:
+                            continue
+                        if any(p.search(text) for p in patterns):
+                            keyword_hits.append(SkipRange.from_ms(b.start_ms, b.end_ms, cat.value))
+                            if not multi_label:
+                                break
+                return keyword_hits
 
     # Launch all chunks in parallel (bounded by semaphore)
     results = await asyncio.gather(*[process_chunk(i) for i in range(total_chunks)])
@@ -282,13 +296,15 @@ async def analyze_subtitles_stream(
         if (b.text or "").strip() and b.end_ms > b.start_ms
     ]
 
+    # Build keyword patterns (used for fallback in both paths)
+    patterns_by_cat = {
+        cat: _compile_patterns(DEFAULT_KEYWORDS.get(cat, []))
+        for cat in enabled
+    }
+
     # ── Keyword fallback ──────────────────────────────────────────────────────
     if not GEMINI_API_KEY:
         print("No GEMINI_API_KEY set — using keyword matching fallback")
-        patterns_by_cat = {
-            cat: _compile_patterns(DEFAULT_KEYWORDS.get(cat, []))
-            for cat in enabled
-        }
         hits: list[SkipRange] = []
         for b in blocks:
             text = b.text.strip()
@@ -318,7 +334,18 @@ async def analyze_subtitles_stream(
             _analyze_chunk, model, first_chunk, enabled_cat_names, enabled, multi_label
         )
     except Exception:
+        # Fall back to keyword matching for first chunk
+        print("Gemini error for chunk 1 — falling back to keyword matching")
         first_hits = []
+        for b in first_chunk:
+            text = b.text.strip()
+            for cat, patterns in patterns_by_cat.items():
+                if not patterns:
+                    continue
+                if any(p.search(text) for p in patterns):
+                    first_hits.append(SkipRange.from_ms(b.start_ms, b.end_ms, cat.value))
+                    if not multi_label:
+                        break
 
     all_hits.extend(first_hits)
 
@@ -347,7 +374,19 @@ async def analyze_subtitles_stream(
                 )
                 await queue.put((chunk_idx, chunk_hits))
             except Exception:
-                await queue.put((chunk_idx, []))
+                # Fall back to keyword matching for this chunk
+                print(f"Gemini error for chunk {chunk_idx + 1} — falling back to keyword matching")
+                keyword_hits = []
+                for b in chunk:
+                    text = b.text.strip()
+                    for cat, patterns in patterns_by_cat.items():
+                        if not patterns:
+                            continue
+                        if any(p.search(text) for p in patterns):
+                            keyword_hits.append(SkipRange.from_ms(b.start_ms, b.end_ms, cat.value))
+                            if not multi_label:
+                                break
+                await queue.put((chunk_idx, keyword_hits))
 
     remaining = total_chunks - 1
     tasks = [asyncio.create_task(process_chunk(i)) for i in range(1, total_chunks)]
