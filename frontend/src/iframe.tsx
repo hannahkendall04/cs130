@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import { ArrowUp } from "lucide-react";
 import Comment from "./components/Comment";
@@ -13,6 +13,7 @@ function formatTime(seconds: string) {
 function App() {
   const [comment, setComment] = useState("");
   const [comments, setComments] = useState<any[]>([]);
+  const listRef = useRef<HTMLDivElement>(null);
 
   const handlePost = () => {
     chrome.storage.local.set({
@@ -32,10 +33,23 @@ function App() {
     return () => window.removeEventListener("message", handler);
   }, []);
 
+  // When comments update, scroll to bottom so new comments are visible
+  useEffect(() => {
+    if (comments.length > 0 && listRef.current) {
+      const el = listRef.current;
+      requestAnimationFrame(() => {
+        el.scrollTop = el.scrollHeight - el.clientHeight;
+      });
+    }
+  }, [comments]);
+
   return (
     <div className="bg-background border-l-muted box-border grid h-screen grid-rows-[auto_minmax(0,1fr)_auto] gap-2.5 border-l-2 text-white">
       <h1 className="pt-4 pb-2 text-center">comments</h1>
-      <div className="flex min-h-0 flex-col gap-3 overflow-y-auto">
+      <div
+        ref={listRef}
+        className="flex min-h-0 flex-col gap-3 overflow-y-auto"
+      >
         {comments.length === 0 ? (
           <p className="text-muted-foreground px-4 text-sm">no comments yet</p>
         ) : (
