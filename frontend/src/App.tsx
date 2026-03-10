@@ -83,9 +83,8 @@ function App() {
   useEffect(() => {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       const activeTabUrl = tabs?.[0]?.url ?? "";
-      const watchingEpisode = /^https?:\/\/(www\.)?netflix\.com\/watch\/\d+/.test(
-        activeTabUrl,
-      );
+      const watchingEpisode =
+        /^https?:\/\/(www\.)?netflix\.com\/watch\/\d+/.test(activeTabUrl);
       setIsWatchPage(watchingEpisode);
       setPreferencesLocked(watchingEpisode);
     });
@@ -140,7 +139,9 @@ function App() {
       },
       () => {
         // IMPORTANT: tell background to recompute skip ranges immediately
-        chrome.runtime.sendMessage({ type: "FLIXTRA_OPTIONS_UPDATED" }).catch(() => {});
+        chrome.runtime
+          .sendMessage({ type: "FLIXTRA_OPTIONS_UPDATED" })
+          .catch(() => {});
 
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
           const activeTabId = tabs?.[0]?.id;
@@ -164,16 +165,6 @@ function App() {
     window.close();
   };
 
-  // const handlePost = () => {
-  //   chrome.storage.local.set({
-  //     commentData: {
-  //       comment: comment,
-  //     },
-  //   });
-  //   alert("Posted comment!");
-  //   setComment("");
-  // };
-
   const saveDisplayName = (name: string) => {
     chrome.storage.local.set({ displayName: name });
   };
@@ -191,7 +182,7 @@ function App() {
     <div className="bg-background text-foreground flex w-96 flex-col gap-4 p-4">
       <button
         onClick={handleClose}
-        className="text-muted-foreground hover:text-foreground absolute right-3 top-3 transition-colors hover:cursor-pointer"
+        className="text-muted-foreground hover:text-foreground absolute top-3 right-3 transition-colors hover:cursor-pointer"
         aria-label="close"
       >
         <X size={16} />
@@ -241,6 +232,7 @@ function App() {
         <div className="flex items-center justify-between">
           <h2>pg-ify</h2>
           <Switch
+            aria-label="pg-ify"
             className={lockedControlClass}
             checked={pgify}
             onCheckedChange={(value) =>
@@ -353,6 +345,7 @@ function App() {
         <div className="flex items-center justify-between">
           <h2>show comments section</h2>
           <Switch
+            aria-label="show comments section"
             checked={showComments}
             onCheckedChange={(value) => setShowComments(value)}
           />

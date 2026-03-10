@@ -2,11 +2,9 @@
 
 A Chrome extension that provides extra features to Netflix using React and [Vite](https://vitejs.dev/) with TypeScript along with a FastAPI backend.
 
-### About this Project 
+## Goals
 
-#### Goals
-
-#### High-Level Design 
+## High-Level Design
 
 ## Getting Started
 
@@ -32,7 +30,7 @@ A Chrome extension that provides extra features to Netflix using React and [Vite
    npm install
    ```
 
-2. Install the backend dependencies:
+3. Install the backend dependencies:
 
    ```sh
    cd ..
@@ -40,16 +38,19 @@ A Chrome extension that provides extra features to Netflix using React and [Vite
    ```
 
    - If you're running Mac/Linux:
+
    ```sh
    source .venv/bin/activate
    ```
 
    - If you're running Windows with PowerShell:
+
    ```sh
    .venv\Scripts\Activate.ps1
    ```
 
    - Then proceed with the installation:
+
    ```sh
    python -m pip install --upgrade pip
    pip install -r requirements.txt
@@ -58,6 +59,7 @@ A Chrome extension that provides extra features to Netflix using React and [Vite
    Be sure to always have the virtual environment activated whenever working on the backend server! Learn more about using virtual environments [here](https://fastapi.tiangolo.com/virtual-environments/).
 
    To deactivate the virtual environment whenever you're done developing the backend server:
+
    ```sh
    deactivate
    ```
@@ -113,25 +115,38 @@ This will start the Vite development server and open your default browser.
 
 ## Running Tests
 
+### Frontend
+
+Tests use Vitest and React Testing Library. To run all tests:
+
+```sh
+cd frontend
+npm run test
+```
+
+### Backend
+
 Unit tests currently live under `backend/app/filters` and use Python's built-in `unittest` runner. To run all backend filter tests:
 
-   - From `backend/`:
-   ```sh
-   python -m unittest discover -s app/filters -p "test_*.py" -v
-   ```
+- From `backend/`:
 
-   - From repo root:
-   ```sh
-   python -m unittest discover -s backend/app/filters -p "test_*.py" -v
-   ```
+```sh
+python -m unittest discover -s app/filters -p "test_*.py" -v
+```
+
+- From repo root:
+
+```sh
+python -m unittest discover -s backend/app/filters -p "test_*.py" -v
+```
 
 (Optional) Run a specific test file, class, or method.
 
-   ```sh
-   python -m unittest app.filters.test_detector_unit -v
-   python -m unittest app.filters.test_detector_unit.TestDetectorHelpers -v
-   python -m unittest app.filters.test_detector_unit.TestDetectorHelpers.test_compile_patterns_word_boundaries -v
-   ```
+```sh
+python -m unittest app.filters.test_detector_unit -v
+python -m unittest app.filters.test_detector_unit.TestDetectorHelpers -v
+python -m unittest app.filters.test_detector_unit.TestDetectorHelpers.test_compile_patterns_word_boundaries -v
+```
 
 ## License
 

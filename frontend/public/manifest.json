@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Flixtra",
+  "name": "flixtra",
   "version": "1.0",
   "description": "A Chrome extension that provides extra features to Netflix.",
   "permissions": ["activeTab", "storage", "webRequest", "downloads", "tabs"],

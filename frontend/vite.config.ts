@@ -1,11 +1,14 @@
-import path, { resolve } from "path";
-import { defineConfig } from "vite";
+import path from "path";
+import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import { viteStaticCopy } from "vite-plugin-static-copy";
 import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
   base: "./",
+  test: {
+    environment: "jsdom",
+  },
   plugins: [
     react(),
     tailwindcss(),
