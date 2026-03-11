@@ -10,7 +10,6 @@ let commentInterval = null;
 let currentShowId = null;
 let commentsSyncInterval = null;
 const DEFAULT_SIDEBAR_WIDTH = 400;
-const layoutOriginalStyles = new Map();
 
 // load time
 chrome.storage.local.get(
@@ -85,7 +84,6 @@ async function syncCommentsVisibility() {
   }
 
   wrapNetflixPage();
-  applySideBySideLayout();
   attachPlaybackLifecycle();
 
   const latestShowId = getNetflixTrackId();
@@ -243,76 +241,8 @@ function sendVisibleComments() {
   );
 }
 
-function getLayoutTargets() {
-  const selectors = [
-    "#appMountPoint",
-    ".watch-video",
-    ".watch-video--player-view",
-    ".nf-player-container",
-    ".ltr-fntwn3",
-  ];
-
-  const uniqueTargets = new Set();
-  selectors.forEach((selector) => {
-    document.querySelectorAll(selector).forEach((el) => uniqueTargets.add(el));
-  });
-
-  return Array.from(uniqueTargets);
-}
-
-function applySideBySideLayout() {
-  const targets = getLayoutTargets();
-  if (!targets.length) return;
-
-  document.body.classList.add("flixtra-comments-visible");
-
-  targets.forEach((target) => {
-    if (!layoutOriginalStyles.has(target)) {
-      layoutOriginalStyles.set(target, {
-        width: target.style.width,
-        maxWidth: target.style.maxWidth,
-        marginRight: target.style.marginRight,
-        right: target.style.right,
-        left: target.style.left,
-      });
-    }
-
-    const computed = window.getComputedStyle(target);
-    target.style.width = `calc(100vw - ${DEFAULT_SIDEBAR_WIDTH}px)`;
-    target.style.maxWidth = `calc(100vw - ${DEFAULT_SIDEBAR_WIDTH}px)`;
-
-    if (computed.position === "fixed" || computed.position === "absolute") {
-      target.style.left = "0";
-      target.style.right = `${DEFAULT_SIDEBAR_WIDTH}px`;
-      target.style.marginRight = "0";
-    } else {
-      target.style.right = "";
-      target.style.marginRight = `${DEFAULT_SIDEBAR_WIDTH}px`;
-    }
-  });
-}
-
-function resetSideBySideLayout() {
-  document.body.classList.remove("flixtra-comments-visible");
-
-  layoutOriginalStyles.forEach((styles, element) => {
-    if (!document.contains(element)) return;
-
-    element.style.width = styles.width;
-    element.style.maxWidth = styles.maxWidth;
-    element.style.marginRight = styles.marginRight;
-    element.style.right = styles.right;
-    element.style.left = styles.left;
-  });
-
-  layoutOriginalStyles.clear();
-}
-
 function wrapNetflixPage() {
-  if (document.getElementById("flixtra-iframe")) {
-    applySideBySideLayout();
-    return;
-  }
+  if (document.getElementById("flixtra-iframe")) return;
 
   const iframe = document.createElement("iframe");
   iframe.id = "flixtra-iframe";
@@ -328,17 +258,19 @@ function wrapNetflixPage() {
   iframe.style.backgroundColor = "#141414";
 
   document.body.appendChild(iframe);
-  applySideBySideLayout();
+  document.body.style.marginRight = `${DEFAULT_SIDEBAR_WIDTH}px`;
 }
 
 function unwrapNetflixPage() {
   clearInterval(commentInterval);
   commentInterval = null;
   allComments = [];
-  resetSideBySideLayout();
   // Remove the iframe
   const iframe = document.getElementById("flixtra-iframe");
   if (iframe) {
     iframe.remove();
   }
+
+  // Reset Netflix page margin
+  document.body.style.marginRight = "0";
 }
