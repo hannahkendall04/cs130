@@ -21,7 +21,7 @@ function App() {
         comment: comment,
       },
     });
-    alert("Posted comment!");
+    // alert("Posted comment!");
     setComment("");
   };
 
