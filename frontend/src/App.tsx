@@ -154,7 +154,7 @@ function App() {
           }
         });
 
-        // alert("Saved filter options");
+        alert("Saved filter options");
         window.close();
       },
     );
