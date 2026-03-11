@@ -4,7 +4,7 @@ let comment = null;
 let user = null;
 let showId = null;
 let commentStartTime = null;
-let showComments = false;
+let showComments = true;
 let allComments = [];
 let commentInterval = null;
 let currentShowId = null;
@@ -16,7 +16,9 @@ chrome.storage.local.get(
   ["commentData", "showComments", "displayName"],
   (data) => {
     comment = data.commentData?.comment;
-    showComments = data.showComments;
+    if (typeof data.showComments === "boolean") {
+      showComments = data.showComments;
+    }
     user = data.displayName || "anonymous";
     syncCommentsVisibility();
   },
@@ -239,6 +241,81 @@ function sendVisibleComments() {
     { type: "FLIXTRA_COMMENTS", comments: visible },
     "*",
   );
+}
+
+function getLayoutTargets() {
+  const selectors = [
+    "#appMountPoint",
+    ".watch-video",
+    ".watch-video--player-view",
+    ".nf-player-container",
+    ".ltr-fntwn3",
+  ];
+
+  const uniqueTargets = new Set();
+  selectors.forEach((selector) => {
+    document.querySelectorAll(selector).forEach((el) => uniqueTargets.add(el));
+  });
+
+  return Array.from(uniqueTargets);
+}
+
+function applySideBySideLayout() {
+  const targets = getLayoutTargets();
+  if (!targets.length) return;
+
+  document.body.classList.add("flixtra-comments-visible");
+
+  targets.forEach((target) => {
+    if (!layoutOriginalStyles.has(target)) {
+      layoutOriginalStyles.set(target, {
+        width: target.style.width,
+        maxWidth: target.style.maxWidth,
+        marginRight: target.style.marginRight,
+        right: target.style.right,
+        left: target.style.left,
+      });
+    }
+
+    const computed = window.getComputedStyle(target);
+    target.style.width = `calc(100vw - ${DEFAULT_SIDEBAR_WIDTH}px)`;
+    target.style.maxWidth = `calc(100vw - ${DEFAULT_SIDEBAR_WIDTH}px)`;
+
+    if (computed.position === "fixed" || computed.position === "absolute") {
+      target.style.left = "0";
+      target.style.right = `${DEFAULT_SIDEBAR_WIDTH}px`;
+      target.style.marginRight = "0";
+    } else {
+      target.style.right = "";
+      target.style.marginRight = `${DEFAULT_SIDEBAR_WIDTH}px`;
+    }
+  });
+}
+
+function resetSideBySideLayout() {
+  document.body.classList.remove("flixtra-comments-visible");
+
+  // Restore saved original styles for elements still in the DOM
+  layoutOriginalStyles.forEach((styles, element) => {
+    if (!document.contains(element)) return;
+
+    element.style.width = styles.width;
+    element.style.maxWidth = styles.maxWidth;
+    element.style.marginRight = styles.marginRight;
+    element.style.right = styles.right;
+    element.style.left = styles.left;
+  });
+
+  layoutOriginalStyles.clear();
+
+  // Also reset any current layout targets that Netflix may have recreated
+  getLayoutTargets().forEach((target) => {
+    target.style.width = "";
+    target.style.maxWidth = "";
+    target.style.marginRight = "";
+    target.style.right = "";
+    target.style.left = "";
+  });
 }
 
 function wrapNetflixPage() {
