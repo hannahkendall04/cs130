@@ -18,7 +18,7 @@ type FilterMethod = "skip" | "mute" | "bleep";
 function App() {
   const [filterMethod, setFilterMethod] = useState<FilterMethod>("skip");
   const [pgify, setPgify] = useState(false);
-  const [showComments, setShowComments] = useState(false);
+  const [showComments, setShowComments] = useState(true);
   const [isWatchPage, setIsWatchPage] = useState(false);
   const [preferencesLocked, setPreferencesLocked] = useState(false);
   const [showLockedMessage, setShowLockedMessage] = useState(false);

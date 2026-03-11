@@ -376,6 +376,10 @@ function convertToMs(timeStr) {
 
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   if (changeInfo.status === "complete" && tab.url?.includes("netflix.com")) {
+    // Don't auto-open popup on watch pages (episodes) — the comment bar handles that
+    const isWatchPage = /netflix\.com\/watch\/\d+/.test(tab.url);
+    if (isWatchPage) return;
+
     const { popupDismissed } = await chrome.storage.session.get("popupDismissed");
     if (!popupDismissed) {
       try {

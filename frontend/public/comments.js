@@ -4,7 +4,7 @@ let comment = null;
 let user = null;
 let showId = null;
 let commentStartTime = null;
-let showComments = false;
+let showComments = true;
 let allComments = [];
 let commentInterval = null;
 let currentShowId = null;
@@ -17,7 +17,9 @@ chrome.storage.local.get(
   ["commentData", "showComments", "displayName"],
   (data) => {
     comment = data.commentData?.comment;
-    showComments = data.showComments;
+    if (typeof data.showComments === "boolean") {
+      showComments = data.showComments;
+    }
     user = data.displayName || "anonymous";
     syncCommentsVisibility();
   },
@@ -295,6 +297,7 @@ function applySideBySideLayout() {
 function resetSideBySideLayout() {
   document.body.classList.remove("flixtra-comments-visible");
 
+  // Restore saved original styles for elements still in the DOM
   layoutOriginalStyles.forEach((styles, element) => {
     if (!document.contains(element)) return;
 
@@ -306,6 +309,15 @@ function resetSideBySideLayout() {
   });
 
   layoutOriginalStyles.clear();
+
+  // Also reset any current layout targets that Netflix may have recreated
+  getLayoutTargets().forEach((target) => {
+    target.style.width = "";
+    target.style.maxWidth = "";
+    target.style.marginRight = "";
+    target.style.right = "";
+    target.style.left = "";
+  });
 }
 
 function wrapNetflixPage() {
