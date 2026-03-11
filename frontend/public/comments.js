@@ -10,7 +10,6 @@ let commentInterval = null;
 let currentShowId = null;
 let commentsSyncInterval = null;
 const DEFAULT_SIDEBAR_WIDTH = 400;
-const layoutOriginalStyles = new Map();
 
 // load time
 chrome.storage.local.get(
@@ -87,7 +86,6 @@ async function syncCommentsVisibility() {
   }
 
   wrapNetflixPage();
-  applySideBySideLayout();
   attachPlaybackLifecycle();
 
   const latestShowId = getNetflixTrackId();
@@ -321,10 +319,7 @@ function resetSideBySideLayout() {
 }
 
 function wrapNetflixPage() {
-  if (document.getElementById("flixtra-iframe")) {
-    applySideBySideLayout();
-    return;
-  }
+  if (document.getElementById("flixtra-iframe")) return;
 
   const iframe = document.createElement("iframe");
   iframe.id = "flixtra-iframe";
@@ -340,17 +335,19 @@ function wrapNetflixPage() {
   iframe.style.backgroundColor = "#141414";
 
   document.body.appendChild(iframe);
-  applySideBySideLayout();
+  document.body.style.marginRight = `${DEFAULT_SIDEBAR_WIDTH}px`;
 }
 
 function unwrapNetflixPage() {
   clearInterval(commentInterval);
   commentInterval = null;
   allComments = [];
-  resetSideBySideLayout();
   // Remove the iframe
   const iframe = document.getElementById("flixtra-iframe");
   if (iframe) {
     iframe.remove();
   }
+
+  // Reset Netflix page margin
+  document.body.style.marginRight = "0";
 }
