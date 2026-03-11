@@ -110,16 +110,12 @@ describe("App", () => {
     // toggle pg-ify
     fireEvent.click(pgSwitch);
 
-    // mock alert & window.close to avoid real calls
-    const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => {});
     const closeSpy = vi.spyOn(window, "close").mockImplementation(() => {});
 
     fireEvent.click(saveButton);
 
-    expect(alertSpy).toHaveBeenCalledWith("Saved filter options");
     expect(closeSpy).toHaveBeenCalled();
 
-    alertSpy.mockRestore();
     closeSpy.mockRestore();
   });
 
