@@ -9,6 +9,12 @@ let blurEnabled = false;
 let blurring = false;
 let analyzing = false;
 
+const BLUR_CATEGORIES = new Set([
+  "SEXUAL_CONTENT", "NUDITY", "VIOLENCE", "GORE",
+  "SUBSTANCE_USE", "SELF_HARM", "BULLYING", "WEAPONS",
+  "CRIMINAL_ACTIVITY", "HATE_SPEECH", "TERROR_THREATS",
+]);
+
 function getVideo() {
   return document.querySelector("video");
 }
@@ -203,7 +209,7 @@ function attachToVideo(video) {
           bleeping = true;
         }
 
-        if (blurEnabled && !blurring) {
+        if (blurEnabled && !blurring && BLUR_CATEGORIES.has(activeRange.category?.toUpperCase())) {
           showBlurOverlay(video);
           blurring = true;
         }

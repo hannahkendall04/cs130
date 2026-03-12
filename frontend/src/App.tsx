@@ -318,7 +318,10 @@ function App() {
               filterMethod === "skip" && "bg-accent!"
             }`}
             disabled={preferencesLocked}
-            onClick={() => setFilterMethod("skip")}
+            onClick={() => {
+              setFilterMethod("skip");
+              setBlurEnabled(false);
+            }}
           >
             skip
           </button>
@@ -344,17 +347,19 @@ function App() {
           </button>
         </div>
       </div>
-      <div className="flex items-center justify-between">
-        <h2>blur video</h2>
-        <Switch
-          aria-label="blur video"
-          className={lockedControlClass}
-          checked={blurEnabled}
-          onCheckedChange={(value) =>
-            handleLockedPreferenceAction(() => setBlurEnabled(value))
-          }
-        />
-      </div>
+      {filterMethod !== "skip" && (
+        <div className="flex items-center justify-between">
+          <h2>blur video</h2>
+          <Switch
+            aria-label="blur video"
+            className={lockedControlClass}
+            checked={blurEnabled}
+            onCheckedChange={(value) =>
+              handleLockedPreferenceAction(() => setBlurEnabled(value))
+            }
+          />
+        </div>
+      )}
       {isWatchPage && (
         <div className="flex items-center justify-between">
           <h2>show comments section</h2>
