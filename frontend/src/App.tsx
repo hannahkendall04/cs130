@@ -18,6 +18,7 @@ type FilterMethod = "skip" | "mute" | "bleep";
 function App() {
   const [filterMethod, setFilterMethod] = useState<FilterMethod>("skip");
   const [pgify, setPgify] = useState(false);
+  const [blurEnabled, setBlurEnabled] = useState(false);
   const [showComments, setShowComments] = useState(true);
   const [isWatchPage, setIsWatchPage] = useState(false);
   const [preferencesLocked, setPreferencesLocked] = useState(false);
@@ -48,6 +49,7 @@ function App() {
       [
         "filterMethod",
         "pgifyActive",
+        "blurEnabled",
         "showComments",
         "displayName",
         "enabledFilters",
@@ -62,6 +64,7 @@ function App() {
         }
 
         if (typeof data.pgifyActive === "boolean") setPgify(data.pgifyActive);
+        if (typeof data.blurEnabled === "boolean") setBlurEnabled(data.blurEnabled);
         if (typeof data.showComments === "boolean")
           setShowComments(data.showComments);
         if (typeof data.displayName === "string")
@@ -134,6 +137,7 @@ function App() {
       {
         filterMethod,
         pgifyActive: pgify,
+        blurEnabled,
         showComments,
         enabledFilters,
       },
@@ -314,7 +318,10 @@ function App() {
               filterMethod === "skip" && "bg-accent!"
             }`}
             disabled={preferencesLocked}
-            onClick={() => setFilterMethod("skip")}
+            onClick={() => {
+              setFilterMethod("skip");
+              setBlurEnabled(false);
+            }}
           >
             skip
           </button>
@@ -340,6 +347,19 @@ function App() {
           </button>
         </div>
       </div>
+      {filterMethod !== "skip" && (
+        <div className="flex items-center justify-between">
+          <h2>blur video</h2>
+          <Switch
+            aria-label="blur video"
+            className={lockedControlClass}
+            checked={blurEnabled}
+            onCheckedChange={(value) =>
+              handleLockedPreferenceAction(() => setBlurEnabled(value))
+            }
+          />
+        </div>
+      )}
       {isWatchPage && (
         <div className="flex items-center justify-between">
           <h2>show comments section</h2>

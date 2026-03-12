@@ -5,7 +5,15 @@ let filterMethod = "";
 let bleeping = false;
 let bleepCtx = null;
 let filterContent = false;
+let blurEnabled = false;
+let blurring = false;
 let analyzing = false;
+
+const BLUR_CATEGORIES = new Set([
+  "SEXUAL_CONTENT", "NUDITY", "VIOLENCE", "GORE",
+  "SUBSTANCE_USE", "SELF_HARM", "BULLYING", "WEAPONS",
+  "CRIMINAL_ACTIVITY", "HATE_SPEECH", "TERROR_THREATS",
+]);
 
 function getVideo() {
   return document.querySelector("video");
@@ -81,7 +89,7 @@ function hideAnalyzingOverlay() {
 }
 
 // load time
-chrome.storage.local.get(["skipRanges", "skipRange", "filterMethod", "pgifyActive"], (data) => {
+chrome.storage.local.get(["skipRanges", "skipRange", "filterMethod", "pgifyActive", "blurEnabled"], (data) => {
   if (Array.isArray(data.skipRanges)) {
     skipRanges = data.skipRanges;
   } else if (data.skipRange?.start != null && data.skipRange?.end != null) {
@@ -90,6 +98,7 @@ chrome.storage.local.get(["skipRanges", "skipRange", "filterMethod", "pgifyActiv
 
   filterMethod = data.filterMethod;
   filterContent = data.pgifyActive === true;
+  blurEnabled = data.blurEnabled === true;
   if (filterContent && skipRanges.length === 0) {
     analyzing = true;
     showAnalyzingOverlay();
@@ -123,6 +132,10 @@ chrome.storage.onChanged.addListener((changes) => {
   if (changes.pgifyActive) {
     filterContent = changes.pgifyActive.newValue;
   }
+
+  if (changes.blurEnabled) {
+    blurEnabled = changes.blurEnabled.newValue === true;
+  }
 });
 
 const observer = new MutationObserver(() => {
@@ -145,6 +158,31 @@ function getActiveRange(currentTime) {
       currentTime < range.end,
   );
 }
+function showBlurOverlay(video) {
+  if (document.getElementById("flixtra-blur-overlay")) return;
+  const overlay = document.createElement("div");
+  overlay.id = "flixtra-blur-overlay";
+  overlay.style.cssText = `
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    backdrop-filter: blur(50px);
+    -webkit-backdrop-filter: blur(50px);
+    z-index: 9999;
+    pointer-events: none;
+  `;
+  const parent = video.parentElement;
+  if (parent) {
+    parent.style.position = parent.style.position || "relative";
+    parent.appendChild(overlay);
+  }
+}
+
+function hideBlurOverlay() {
+  const overlay = document.getElementById("flixtra-blur-overlay");
+  if (overlay) overlay.remove();
+}
+
 function attachToVideo(video) {
   video.addEventListener("pause", () => pauseBleep());
 
@@ -170,12 +208,24 @@ function attachToVideo(video) {
           startBleep();
           bleeping = true;
         }
+
+        if (blurEnabled && !blurring && BLUR_CATEGORIES.has(activeRange.category?.toUpperCase())) {
+          showBlurOverlay(video);
+          blurring = true;
+        }
       } else if ((filterMethod === "mute" || filterMethod === "bleep") && video.muted) {
         video.muted = false;
         if (bleeping) {
           stopBleep();
           bleeping = false;
         }
+        if (blurring) {
+          hideBlurOverlay();
+          blurring = false;
+        }
+      } else if (!activeRange && blurring) {
+        hideBlurOverlay();
+        blurring = false;
       }
     }
   })
