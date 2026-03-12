@@ -33,4 +33,4 @@ __pycache__/
 *.env
 
 # creds 
-creds.*
+creds.*.claude/settings.json
