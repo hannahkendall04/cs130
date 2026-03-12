@@ -17,7 +17,15 @@ class FilterCategory(str, Enum):
     TERROR_THREATS = "TERROR_THREATS"
 
 
-DEFAULT_MERGE_GAP_MS = 500
+DEFAULT_MERGE_GAP_MS = 5000
+SCENE_MERGE_GAP_MS = 60000
+
+CATEGORY_MERGE_GAP_MS: dict[str, int] = {
+    FilterCategory.SEXUAL_CONTENT.value: SCENE_MERGE_GAP_MS,
+    FilterCategory.NUDITY.value: SCENE_MERGE_GAP_MS,
+    FilterCategory.VIOLENCE.value: SCENE_MERGE_GAP_MS,
+    FilterCategory.GORE.value: SCENE_MERGE_GAP_MS,
+}
 
 DEFAULT_KEYWORDS: dict[FilterCategory, list[str]] = {
 

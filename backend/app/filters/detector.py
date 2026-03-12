@@ -16,6 +16,7 @@ from app.filters.categories import (
     FilterCategory,
     DEFAULT_KEYWORDS,
     DEFAULT_MERGE_GAP_MS,
+    CATEGORY_MERGE_GAP_MS,
 )
 from app.filters.prompts import get_content_analysis_prompt
 
@@ -67,7 +68,8 @@ def _compile_patterns(keywords: list[str]) -> list[re.Pattern]:
 
 def _merge_skip_ranges(
     ranges: list[SkipRange],
-    gap_ms: int = DEFAULT_MERGE_GAP_MS
+    gap_ms: int = DEFAULT_MERGE_GAP_MS,
+    category_gaps: Optional[dict[str, int]] = None,
 ) -> list[SkipRange]:
     """
     Merge SkipRanges of the same category if they overlap OR are within gap_ms.
@@ -99,7 +101,8 @@ def _merge_skip_ranges(
         curr_end = r.time_range.end.ms
 
         # Overlap OR close enough (including touching)
-        if curr_start <= last_end + gap_ms:
+        effective_gap = category_gaps.get(last.category, gap_ms) if category_gaps else gap_ms
+        if curr_start <= last_end + effective_gap:
             new_start = min(last_start, curr_start)
             new_end = max(last_end, curr_end)
             merged[-1] = SkipRange.from_ms(new_start, new_end, last.category)
@@ -226,7 +229,7 @@ async def analyze_subtitles(
                     hits.append(SkipRange.from_ms(b.start_ms, b.end_ms, cat.value))
                     if not multi_label:
                         break
-        return _merge_skip_ranges(hits, gap_ms=merge_gap_ms)
+        return _merge_skip_ranges(hits, gap_ms=merge_gap_ms, category_gaps=CATEGORY_MERGE_GAP_MS)
 
     # ── Gemini parallel batched analysis ─────────────────────────────────────
     model = genai.GenerativeModel("gemini-2.5-flash")
@@ -272,7 +275,7 @@ async def analyze_subtitles(
     if errors:
         print(f"Warning: {errors}/{total_chunks} chunks returned no results")
 
-    result = _merge_skip_ranges(hits, gap_ms=merge_gap_ms)
+    result = _merge_skip_ranges(hits, gap_ms=merge_gap_ms, category_gaps=CATEGORY_MERGE_GAP_MS)
     print(f"analyze_subtitles complete: {len(result)} skip ranges found from {len(blocks)} blocks")
     return result
 
@@ -315,7 +318,7 @@ async def analyze_subtitles_stream(
                     hits.append(SkipRange.from_ms(b.start_ms, b.end_ms, cat.value))
                     if not multi_label:
                         break
-        merged = _merge_skip_ranges(hits, gap_ms=merge_gap_ms)
+        merged = _merge_skip_ranges(hits, gap_ms=merge_gap_ms, category_gaps=CATEGORY_MERGE_GAP_MS)
         yield (merged, 1, 1, True)
         return
 
@@ -350,7 +353,7 @@ async def analyze_subtitles_stream(
     all_hits.extend(first_hits)
 
     if total_chunks == 1:
-        merged = _merge_skip_ranges(all_hits, gap_ms=merge_gap_ms)
+        merged = _merge_skip_ranges(all_hits, gap_ms=merge_gap_ms, category_gaps=CATEGORY_MERGE_GAP_MS)
         print(f"analyze_subtitles_stream complete: {len(merged)} skip ranges from {len(blocks)} blocks")
         yield (merged, 1, 1, True)
         return
@@ -399,7 +402,7 @@ async def analyze_subtitles_stream(
         is_final = completed == remaining
 
         if is_final:
-            merged = _merge_skip_ranges(all_hits, gap_ms=merge_gap_ms)
+            merged = _merge_skip_ranges(all_hits, gap_ms=merge_gap_ms, category_gaps=CATEGORY_MERGE_GAP_MS)
             print(f"analyze_subtitles_stream complete: {len(merged)} skip ranges from {len(blocks)} blocks")
             yield (merged, completed + 1, total_chunks, True)
         else:
