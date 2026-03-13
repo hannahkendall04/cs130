@@ -104,6 +104,13 @@ Your React app should now be loaded as a Chrome extension!
 
 ## Backend Development
 
+Create an env file to store sensitive environment variables as `backend/.env`:
+```env
+MONGODB_URL="..."
+DB_NAME="..."
+GEMINI_API_KEY="..."
+```
+
 To start the backend development server (make sure your virtual environment is active!):
 
 ```sh
