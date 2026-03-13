@@ -67,7 +67,7 @@ tags_metadata = [
         "description": "retrieve comments from the MongoDB database given a Netflix showId"
     },
     {
-        "name": "post_timestamps",
+        "name": "stamps",
         "description": "post skip range timestamps to the MongoDB database"
     },
     {
@@ -135,13 +135,7 @@ async def get_comments(getComments: GetCommentsShowId):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@app.post("/post_timestamps", tags=["post_timestamps"])
-async def post_timestamps(skip_ranges: List[SkipRange], filters: List[str], show_id: str):
-    try:
-        await db_utils.save_timestamps(show_id=show_id, filters=filters, skip_ranges=skip_ranges)
-        return {"status": "success", "show_id": show_id}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+
     
 
 @app.get("/get_timestamps", tags=["get_timestamps"])
