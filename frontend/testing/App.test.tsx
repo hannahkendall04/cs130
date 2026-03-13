@@ -119,6 +119,58 @@ describe("App", () => {
     closeSpy.mockRestore();
   });
 
+  it("does not crash with missing/partial storage data and keeps defaults", async () => {
+    const chromeMock = makeChromeMock();
+    chromeMock.storage.local.get = vi.fn((_keys, cb) => cb({}));
+    global.chrome = chromeMock;
+
+    render(<App />);
+
+    const skipButton = await screen.findByRole("button", { name: /skip/i });
+    expect(skipButton.className).toContain("bg-accent");
+    expect(screen.getByText(/lorem ipsum/i)).toBeInTheDocument();
+  });
+
+  it("does not send show-comments message if active tab id is missing", async () => {
+    const chromeMock = makeChromeMock();
+    chromeMock.tabs.query = vi.fn((_query, cb) =>
+      cb([{ url: "https://www.netflix.com/watch/80217615" } as any]),
+    );
+    global.chrome = chromeMock;
+
+    render(<App />);
+
+    // show comments toggle appears on watch page
+    const commentsSwitch = await screen.findByRole("switch", {
+      name: /show comments section/i,
+    });
+    fireEvent.click(commentsSwitch);
+
+    const sendMessage = vi.mocked(chromeMock.tabs.sendMessage);
+    const closeSpy = vi.spyOn(window, "close").mockImplementation(() => {});
+
+    fireEvent.click(screen.getByRole("button", { name: /save/i }));
+
+    expect(sendMessage).not.toHaveBeenCalled();
+    expect(closeSpy).toHaveBeenCalled();
+
+    closeSpy.mockRestore();
+  });
+
+  it("shows blur toggle only when filter method is not skip", async () => {
+    setup();
+
+    // default is skip, so blur switch should be absent
+    expect(screen.queryByRole("switch", { name: /blur video/i })).toBeNull();
+
+    const muteButton = await screen.findByRole("button", { name: /mute/i });
+    fireEvent.click(muteButton);
+
+    expect(
+      await screen.findByRole("switch", { name: /blur video/i }),
+    ).toBeInTheDocument();
+  });
+
   it("shows locked message when preferences are locked and user tries to change", async () => {
     // set active tab to a watch URL so preferencesLocked = true
     const chromeMock = makeChromeMock();

@@ -10,12 +10,13 @@ function formatTime(seconds: string) {
   return `${m}:${String(s % 60).padStart(2, "0")}`;
 }
 
-function App() {
+export function IframeApp() {
   const [comment, setComment] = useState("");
   const [comments, setComments] = useState<any[]>([]);
   const listRef = useRef<HTMLDivElement>(null);
 
   const handlePost = () => {
+    if (!comment.trim()) return;
     chrome.storage.local.set({
       commentData: {
         comment: comment,
@@ -70,17 +71,26 @@ function App() {
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
-              if (comment.trim()) handlePost();
+              handlePost();
             }
           }}
           className="bg-card text-foreground focus:border-ring border-muted w-full resize-none rounded border p-3 text-sm outline-none"
         />
-        <div className="bg-primary hover:bg-accent flex items-center justify-between rounded-full p-1 text-white transition-all duration-300 ease-in-out hover:cursor-pointer">
-          <ArrowUp onClick={handlePost} size={20} />
-        </div>
+        <button
+          type="button"
+          aria-label="post comment"
+          disabled={!comment.trim()}
+          onClick={handlePost}
+          className="bg-primary hover:bg-accent disabled:opacity-50 disabled:hover:bg-primary flex items-center justify-between rounded-full p-1 text-white transition-all duration-300 ease-in-out hover:cursor-pointer disabled:hover:cursor-not-allowed"
+        >
+          <ArrowUp size={20} />
+        </button>
       </div>
     </div>
   );
 }
 
-createRoot(document.getElementById("root")!).render(<App />);
+const rootEl = document.getElementById("root");
+if (rootEl) {
+  createRoot(rootEl).render(<IframeApp />);
+}
