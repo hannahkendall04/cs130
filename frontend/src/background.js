@@ -272,29 +272,29 @@ async function analyzeSubtitlesStream(srtContent, showId, enabledFilters) {
   }
 }
 
-async function analyzeSubtitles(srtContent, showId, enabledFilters) {
-  const payload = {
-    subtitle_content: srtContent,
-    show_id: String(showId),
-    enabled_filters: enabledFilters,
-    save_cache: true,
-  };
-
-  const res = await fetch(`${API_BASE_URL}/analyze_subtitles`, {
-    method: "POST",
-    headers: { Accept: "application/json", "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(`analyze_subtitles failed: ${res.status} ${errText}`);
-  }
-
-  const result = await res.json();
-  const ranges = result?.skip_ranges;
-  return Array.isArray(ranges) ? ranges : [];
-}
+// async function analyzeSubtitles(srtContent, showId, enabledFilters) {
+//   const payload = {
+//     subtitle_content: srtContent,
+//     show_id: String(showId),
+//     enabled_filters: enabledFilters,
+//     save_cache: true,
+//   };
+//
+//   const res = await fetch(`${API_BASE_URL}/analyze_subtitles`, {
+//     method: "POST",
+//     headers: { Accept: "application/json", "Content-Type": "application/json" },
+//     body: JSON.stringify(payload),
+//   });
+//
+//   if (!res.ok) {
+//     const errText = await res.text();
+//     throw new Error(`analyze_subtitles failed: ${res.status} ${errText}`);
+//   }
+//
+//   const result = await res.json();
+//   const ranges = result?.skip_ranges;
+//   return Array.isArray(ranges) ? ranges : [];
+// }
 
 function normalizeRanges(ranges) {
   const arr = Array.isArray(ranges) ? ranges : [];
