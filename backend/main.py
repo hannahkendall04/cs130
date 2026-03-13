@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from app.cache import SkipRange
 import app.cache as db_utils
 from app.cache import Comment
-from app.filters.detector import analyze_subtitles, analyze_subtitles_stream, SubtitleBlock
+from app.filters.detector import analyze_subtitles_stream, SubtitleBlock
 from app.filters.srt_parser import parse_srt
 from app.filters.categories import FilterCategory
 from typing import List, Optional
@@ -74,10 +74,10 @@ tags_metadata = [
         "name": "get_timestamps",
         "description": "retrieve skip range timestamps from the MongoDB database given a Netflix showId and selected filter categories"
     },
-    {
-        "name": "analyze_subtitles",
-        "description": "analyze subtitles for a given Netflix show and extract skip range timestamps for selected filter categories"
-    },
+    # {
+    #     "name": "analyze_subtitles",
+    #     "description": "analyze subtitles for a given Netflix show and extract skip range timestamps for selected filter categories"
+    # },
     {
         "name": "analyze_subtitles_stream",
         "description": "analyze subtitles for a given Netflix show and extract skip range timestamps for selected filter categories (stream)"
@@ -164,64 +164,64 @@ async def get_timestamps(show_id: str, filters: List[str] = Query(...)):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@app.post("/analyze_subtitles", tags=["analyze_subtitles"])
-async def analyze_subtitles_endpoint(request: AnalyzeSubtitlesRequest):
-    try:
-        print("=== analyze_subtitles called ===")
-        print("show_id:", request.show_id)
-        print("enabled_filters:", request.enabled_filters)
-        print("subtitle chars:", len(request.subtitle_content))
-        # Parse SRT content
-        parsed = parse_srt(request.subtitle_content)
-        
-        # Convert to SubtitleBlock objects
-        subtitle_blocks = [
-            SubtitleBlock(start_ms=start, end_ms=end, text=text)
-            for start, end, text in parsed
-        ]
-        
-        # Convert enabled filter names to FilterCategory set
-        enabled_categories = set()
-        for filter_name in request.enabled_filters:
-            try:
-                enabled_categories.add(FilterCategory[filter_name.upper()])
-            except KeyError:
-                raise HTTPException(status_code=400, detail=f"Invalid filter category: {filter_name}")
-        
-        # Analyze subtitles (async — runs Gemini chunks in parallel)
-        skip_ranges = await analyze_subtitles(
-            subtitle_blocks,
-            enabled_categories=enabled_categories if enabled_categories else None
-        )
-        
-        # Optionally save to cache
-        if request.save_cache and skip_ranges:
-            await db_utils.save_timestamps(
-                show_id=request.show_id,
-                filters=sorted(request.enabled_filters),
-                skip_ranges=skip_ranges
-            )
-        
-        # Convert SkipRange objects to JSON-serializable format
-        response_ranges = [
-            SkipRangeResponse(
-                start_ms=sr.time_range.start.ms,
-                end_ms=sr.time_range.end.ms,
-                category=sr.category
-            )
-            for sr in skip_ranges
-        ]
-        
-        return {
-            "status": "success",
-            "skip_ranges": response_ranges,
-            "count": len(skip_ranges),
-            "cached": request.save_cache
-        }
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+# @app.post("/analyze_subtitles", tags=["analyze_subtitles"])
+# async def analyze_subtitles_endpoint(request: AnalyzeSubtitlesRequest):
+#     try:
+#         print("=== analyze_subtitles called ===")
+#         print("show_id:", request.show_id)
+#         print("enabled_filters:", request.enabled_filters)
+#         print("subtitle chars:", len(request.subtitle_content))
+#         # Parse SRT content
+#         parsed = parse_srt(request.subtitle_content)
+#
+#         # Convert to SubtitleBlock objects
+#         subtitle_blocks = [
+#             SubtitleBlock(start_ms=start, end_ms=end, text=text)
+#             for start, end, text in parsed
+#         ]
+#
+#         # Convert enabled filter names to FilterCategory set
+#         enabled_categories = set()
+#         for filter_name in request.enabled_filters:
+#             try:
+#                 enabled_categories.add(FilterCategory[filter_name.upper()])
+#             except KeyError:
+#                 raise HTTPException(status_code=400, detail=f"Invalid filter category: {filter_name}")
+#
+#         # Analyze subtitles (async — runs Gemini chunks in parallel)
+#         skip_ranges = await analyze_subtitles(
+#             subtitle_blocks,
+#             enabled_categories=enabled_categories if enabled_categories else None
+#         )
+#
+#         # Optionally save to cache
+#         if request.save_cache and skip_ranges:
+#             await db_utils.save_timestamps(
+#                 show_id=request.show_id,
+#                 filters=sorted(request.enabled_filters),
+#                 skip_ranges=skip_ranges
+#             )
+#
+#         # Convert SkipRange objects to JSON-serializable format
+#         response_ranges = [
+#             SkipRangeResponse(
+#                 start_ms=sr.time_range.start.ms,
+#                 end_ms=sr.time_range.end.ms,
+#                 category=sr.category
+#             )
+#             for sr in skip_ranges
+#         ]
+#
+#         return {
+#             "status": "success",
+#             "skip_ranges": response_ranges,
+#             "count": len(skip_ranges),
+#             "cached": request.save_cache
+#         }
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         raise HTTPException(status_code=400, detail=str(e))
 
 
 @app.post("/analyze_subtitles_stream", tags=["analyze_subtitles_stream"])
